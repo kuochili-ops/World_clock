@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>機械六邊型時鐘 - 平面板段版</title>
+    <title>機械六邊型時鐘 - 平面翻板模擬版</title>
     <style>
         :root {
             --wood-color: #dcc2a1;
@@ -23,7 +23,6 @@
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
-            /* 移除 perspective 以實現平面化 */
         }
 
         .clocks-wrapper {
@@ -76,17 +75,19 @@
             height: 130px; 
             background: transparent; 
             flex-shrink: 0;
-            /* 移除 transform-style */
         }
 
+        /* 核心修改：使用 2D 矩陣模擬翻轉 */
         .segment { 
             position: absolute; 
             background: var(--wood-color);
             pointer-events: none;
-            /* 平面過渡效果：縮放 + 透明度 */
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
             opacity: 0;
-            transform: scale(0.6); 
+            /* 初始狀態：垂直壓扁 (模擬側面) */
+            transform: scaleY(0) translateY(-10px);
+            /* 使用更強的貝茲曲線模擬機械彈跳 */
+            transition: transform 0.4s cubic-bezier(0.47, 0, 0.23, 1.38), opacity 0.2s;
+            transform-origin: center;
         }
 
         .seg-h { 
@@ -99,50 +100,48 @@
             width: var(--seg-thickness);
         }
 
-        /* 平面懸浮狀態：只需控制縮放與不透明度 */
+        /* 顯示狀態：恢復原始高度與位置 */
         .segment.on { 
             opacity: 1;
-            transform: scale(1); 
+            transform: scaleY(1) translateY(0); 
         }
 
-        /* 模擬平面投影層 */
+        /* 陰影模擬：隨著翻轉動作出現 */
         .segment::after {
             content: '';
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            transition: opacity 0.4s, transform 0.4s;
+            background: rgba(0,0,0,0.5);
+            transition: opacity 0.4s;
             opacity: 0;
-            filter: blur(5px);
+            filter: blur(4px);
             z-index: -1;
             clip-path: inherit;
         }
 
         .segment.on::after {
             opacity: 1;
-            /* 向右下方偏移模擬光源 */
-            transform: translate(8px, 10px); 
+            transform: translate(6px, 8px); 
         }
 
-        /* 幾何定位修正（平面版不需要 rotate） */
-        .seg-a { top: 4px; left: 14px; right: 14px; }
-        .seg-b { top: 10px; right: 4px; height: 52px; }
-        .seg-c { top: 68px; right: 4px; height: 52px; }
-        .seg-d { bottom: 4px; left: 14px; right: 14px; }
-        .seg-e { top: 68px; left: 4px; height: 52px; }
-        .seg-f { top: 10px; left: 4px; height: 52px; }
-        .seg-g { top: 56px; left: 14px; right: 14px; }
+        /* 定位設定 */
+        .seg-a { top: 4px; left: 14px; right: 14px; transform-origin: top; }
+        .seg-b { top: 10px; right: 4px; height: 52px; transform-origin: right; }
+        .seg-c { top: 68px; right: 4px; height: 52px; transform-origin: right; }
+        .seg-d { bottom: 4px; left: 14px; right: 14px; transform-origin: bottom; }
+        .seg-e { top: 68px; left: 4px; height: 52px; transform-origin: left; }
+        .seg-f { top: 10px; left: 4px; height: 52px; transform-origin: left; }
+        .seg-g { top: 56px; left: 14px; right: 14px; transform-origin: center; }
 
         .sep { color: var(--wood-color); font-size: 3rem; font-weight: bold; margin: 0 5px; opacity: 0.5; padding-bottom: 15px; }
 
         #menuOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); display: none; flex-direction: column; z-index: 999;
+            background: rgba(0,0,0,0.92); display: none; flex-direction: column; z-index: 999;
         }
         .menu-header { padding: 30px; border-bottom: 1px solid #444; display: flex; justify-content: space-between; font-size: 1.5rem; }
         .city-list { flex: 1; overflow-y: auto; padding: 10px; }
-        .city-item { padding: 20px 40px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; cursor: pointer; transition: background 0.3s; }
-        .city-item:hover { background: #1a1a1a; }
+        .city-item { padding: 20px 40px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -175,8 +174,7 @@
 <script>
     const cityData = [
         { name: "檀香山", off: -10 }, { name: "洛杉磯", off: -7 }, { name: "紐約", off: -4 },
-        { name: "倫敦", off: 0 }, { name: "巴黎", off: 1 }, { name: "開羅", off: 2 },
-        { name: "杜拜", off: 4 }, { name: "曼谷", off: 7 }, { name: "台北", off: 8 },
+        { name: "倫敦", off: 0 }, { name: "巴黎", off: 1 }, { name: "台北", off: 8 },
         { name: "東京", off: 9 }, { name: "雪梨", off: 11 }
     ].sort((a,b) => a.off - b.off);
 
@@ -227,10 +225,8 @@
         const now = new Date();
         const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
         const t = new Date(utc + (3600000 * off));
-        const h = String(t.getHours()).padStart(2,'0');
-        const m = String(t.getMinutes()).padStart(2,'0');
-        const s = String(t.getSeconds()).padStart(2,'0');
-        return { digits: (h+m+s).split('').map(Number), date: `${t.getMonth()+1}/${t.getDate()}` };
+        const s = String(t.getHours()).padStart(2,'0') + String(t.getMinutes()).padStart(2,'0') + String(t.getSeconds()).padStart(2,'0');
+        return { digits: s.split('').map(Number), date: `${t.getMonth()+1}/${t.getDate()}` };
     }
 
     async function runTransition(clockKey) {
@@ -266,7 +262,6 @@
             const nameEl = document.getElementById(`name${key.slice(1)}`);
             if(dateEl) dateEl.innerText = t.date;
             if(nameEl) nameEl.innerText = clock.name;
-
             t.digits.forEach((val, i) => {
                 if (!clock.digitLocks[i]) {
                     clock.cur[i] = val;
@@ -285,10 +280,8 @@
             div.innerHTML = `<span>${c.name}</span><span style="opacity:0.4">UTC ${c.off>=0?'+':''}${c.off}</span>`;
             div.onclick = () => {
                 const key = `c${idx}`;
-                state[key].off = c.off;
-                state[key].name = c.name;
-                closeMenu();
-                runTransition(key);
+                state[key].off = c.off; state[key].name = c.name;
+                closeMenu(); runTransition(key);
             };
             list.appendChild(div);
         });
@@ -298,10 +291,8 @@
     function closeMenu() { document.getElementById('menuOverlay').style.display = 'none'; }
 
     window.onload = () => {
-        buildClock('c1');
-        buildClock('c2');
-        runTransition('c1');
-        runTransition('c2');
+        buildClock('c1'); buildClock('c2');
+        runTransition('c1'); runTransition('c2');
         setInterval(update, 1000);
     };
 </script>
