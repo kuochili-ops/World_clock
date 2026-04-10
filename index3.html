@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>機械六邊型時鐘 - PC 相容版</title>
+    <title>機械六邊型時鐘 - 純淨平面翻板版</title>
     <style>
         :root {
             --wood-color: #dcc2a1;
@@ -23,8 +23,6 @@
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
-            /* 強化 PC 端的 3D 透視感 */
-            perspective: 3000px;
         }
 
         .clocks-wrapper {
@@ -41,11 +39,11 @@
             background: var(--bg-frame);
             padding: 40px 20px;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-width: 500px; /* PC 端基礎寬度 */
+            min-width: 500px;
         }
 
         .info-bar {
@@ -77,74 +75,53 @@
             height: 130px; 
             background: transparent; 
             flex-shrink: 0;
-            transform-style: preserve-3d;
         }
 
+        /* 純平面翻板：移除所有陰影相關代碼 */
         .segment { 
             position: absolute; 
-            transform-style: preserve-3d; 
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); 
             background: var(--wood-color);
             pointer-events: none;
+            opacity: 0;
+            /* 模擬翻轉：垂直壓縮與位移 */
+            transform: scaleY(0) translateY(-5px);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1.4), opacity 0.15s;
         }
 
         .seg-h { 
             clip-path: polygon(12% 0%, 88% 0%, 100% 50%, 88% 100%, 12% 100%, 0% 50%);
             height: var(--seg-thickness);
-            transform: rotateX(-90deg); 
-            transform-origin: top center;
         }
 
         .seg-v { 
             clip-path: polygon(50% 0%, 100% 12%, 100% 88%, 50% 100%, 0% 88%, 0% 12%);
             width: var(--seg-thickness);
-            transform: rotateY(-90deg); 
-            transform-origin: left center;
         }
 
-        /* 物理懸浮狀態 */
+        /* 顯示狀態：回歸原始比例 */
         .segment.on { 
-            transform: rotateX(0deg) rotateY(0deg) translateZ(15px); 
-        }
-
-        /* 陰影層 */
-        .segment::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
-            transition: transform 0.6s, opacity 0.6s;
-            opacity: 0;
-            filter: blur(6px);
-            z-index: -1;
-            clip-path: inherit;
-        }
-
-        .segment.on::after {
             opacity: 1;
-            transform: translate(10px, 12px); 
+            transform: scaleY(1) translateY(0); 
         }
 
-        /* 幾何定位 */
-        .seg-a { top: 4px; left: 14px; right: 14px; }
-        .seg-b { top: 10px; right: 4px; height: 52px; }
-        .seg-c { top: 68px; right: 4px; height: 52px; }
-        .seg-d { bottom: 4px; left: 14px; right: 14px; }
-        .seg-e { top: 68px; left: 4px; height: 52px; }
-        .seg-f { top: 10px; left: 4px; height: 52px; }
-        .seg-g { top: 56px; left: 14px; right: 14px; }
+        /* 板段定位設定 */
+        .seg-a { top: 4px; left: 14px; right: 14px; transform-origin: top; }
+        .seg-b { top: 10px; right: 4px; height: 52px; transform-origin: right; }
+        .seg-c { top: 68px; right: 4px; height: 52px; transform-origin: right; }
+        .seg-d { bottom: 4px; left: 14px; right: 14px; transform-origin: bottom; }
+        .seg-e { top: 68px; left: 4px; height: 52px; transform-origin: left; }
+        .seg-f { top: 10px; left: 4px; height: 52px; transform-origin: left; }
+        .seg-g { top: 56px; left: 14px; right: 14px; transform-origin: center; }
 
         .sep { color: var(--wood-color); font-size: 3rem; font-weight: bold; margin: 0 5px; opacity: 0.5; padding-bottom: 15px; }
 
-        /* 選單樣式 */
         #menuOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); display: none; flex-direction: column; z-index: 999;
+            background: rgba(0,0,0,0.92); display: none; flex-direction: column; z-index: 999;
         }
         .menu-header { padding: 30px; border-bottom: 1px solid #444; display: flex; justify-content: space-between; font-size: 1.5rem; }
         .city-list { flex: 1; overflow-y: auto; padding: 10px; }
-        .city-item { padding: 20px 40px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; cursor: pointer; transition: background 0.3s; }
-        .city-item:hover { background: #1a1a1a; }
+        .city-item { padding: 20px 40px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -177,8 +154,7 @@
 <script>
     const cityData = [
         { name: "檀香山", off: -10 }, { name: "洛杉磯", off: -7 }, { name: "紐約", off: -4 },
-        { name: "倫敦", off: 0 }, { name: "巴黎", off: 1 }, { name: "開羅", off: 2 },
-        { name: "杜拜", off: 4 }, { name: "曼谷", off: 7 }, { name: "台北", off: 8 },
+        { name: "倫敦", off: 0 }, { name: "巴黎", off: 1 }, { name: "台北", off: 8 },
         { name: "東京", off: 9 }, { name: "雪梨", off: 11 }
     ].sort((a,b) => a.off - b.off);
 
@@ -229,10 +205,8 @@
         const now = new Date();
         const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
         const t = new Date(utc + (3600000 * off));
-        const h = String(t.getHours()).padStart(2,'0');
-        const m = String(t.getMinutes()).padStart(2,'0');
-        const s = String(t.getSeconds()).padStart(2,'0');
-        return { digits: (h+m+s).split('').map(Number), date: `${t.getMonth()+1}/${t.getDate()}` };
+        const s = String(t.getHours()).padStart(2,'0') + String(t.getMinutes()).padStart(2,'0') + String(t.getSeconds()).padStart(2,'0');
+        return { digits: s.split('').map(Number), date: `${t.getMonth()+1}/${t.getDate()}` };
     }
 
     async function runTransition(clockKey) {
@@ -264,11 +238,8 @@
         ['c1', 'c2'].forEach(key => {
             const clock = state[key];
             const t = getTimeDigits(clock.off);
-            const dateEl = document.getElementById(`date${key.slice(1)}`);
-            const nameEl = document.getElementById(`name${key.slice(1)}`);
-            if(dateEl) dateEl.innerText = t.date;
-            if(nameEl) nameEl.innerText = clock.name;
-
+            document.getElementById(`date${key.slice(1)}`).innerText = t.date;
+            document.getElementById(`name${key.slice(1)}`).innerText = clock.name;
             t.digits.forEach((val, i) => {
                 if (!clock.digitLocks[i]) {
                     clock.cur[i] = val;
@@ -287,10 +258,8 @@
             div.innerHTML = `<span>${c.name}</span><span style="opacity:0.4">UTC ${c.off>=0?'+':''}${c.off}</span>`;
             div.onclick = () => {
                 const key = `c${idx}`;
-                state[key].off = c.off;
-                state[key].name = c.name;
-                closeMenu();
-                runTransition(key);
+                state[key].off = c.off; state[key].name = c.name;
+                closeMenu(); runTransition(key);
             };
             list.appendChild(div);
         });
@@ -299,12 +268,9 @@
 
     function closeMenu() { document.getElementById('menuOverlay').style.display = 'none'; }
 
-    // 初始化程序
     window.onload = () => {
-        buildClock('c1');
-        buildClock('c2');
-        runTransition('c1');
-        runTransition('c2');
+        buildClock('c1'); buildClock('c2');
+        runTransition('c1'); runTransition('c2');
         setInterval(update, 1000);
     };
 </script>
