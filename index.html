@@ -42,55 +42,50 @@
         }
     }
 
-    async function sendShare() {
-        const greetingText = document.getElementById('greeting').value || "送給你一個機械感十足的世界時鐘！";
+async function sendShare() {
+    const greetingText = document.getElementById('greeting').value || "你好！";
 
-        if (!liff.isApiAvailable('shareTargetPicker')) {
-            alert("請確認 LINE 開發者後台的 Scopes 已勾選 shareTargetPicker。");
-            return;
-        }
-
-        try {
-            const result = await liff.shareTargetPicker([
-                {
-                    "type": "flex",
-                    "altText": "白六送給你一個世界時鐘",
-                    "contents": {
-                        "type": "bubble",
-                        "backgroundColor": "#3e2723",
-                        "body": {
-                            "type": "box",
-                            "layout": "vertical",
-                            "contents": [
-                                { "type": "text", "text": "WORLD CLOCK", "color": "#dcc2a1", "size": "xs", "weight": "bold", "letterSpacing": "2px" },
-                                { "type": "text", "text": greetingText, "color": "#ffffff", "margin": "md", "wrap": true, "weight": "bold", "size": "md" },
-                                { "type": "separator", "margin": "xl", "color": "#ffffff22" },
-                                {
-                                    "type": "button",
-                                    "action": {
-                                        "type": "uri",
-                                        "label": "開啟時鐘視窗",
-                                        "uri": CLOCK_URL
-                                    },
-                                    "style": "primary",
-                                    "color": "#dcc2a1",
-                                    "margin": "xl"
-                                }
-                            ]
-                        }
+    try {
+        const result = await liff.shareTargetPicker([
+            {
+                "type": "flex",
+                "altText": "白六分享了一個世界時鐘給你", // 確保這行文字足夠具體
+                "contents": {
+                    "type": "bubble",
+                    "backgroundColor": "#3e2723",
+                    "body": {
+                        "type": "box",
+                        "layout": "vertical",
+                        "contents": [
+                            { "type": "text", "text": "WORLD CLOCK", "color": "#dcc2a1", "size": "xs", "weight": "bold" },
+                            { "type": "text", "text": greetingText, "color": "#ffffff", "margin": "md", "wrap": true, "weight": "bold" },
+                            {
+                                "type": "button",
+                                "action": {
+                                    "type": "uri",
+                                    "label": "開啟時鐘",
+                                    "uri": "https://kuochili-ops.github.io/World_clock/index2.html"
+                                },
+                                "style": "primary",
+                                "color": "#dcc2a1",
+                                "margin": "xl"
+                            }
+                        ]
                     }
                 }
-            ]);
-
-            if (result) {
-                document.getElementById('status').innerText = "已成功發送！";
-                setTimeout(() => liff.closeWindow(), 1200);
             }
-        } catch (error) {
-            console.error(error);
-            alert("發送中斷: " + error.message);
+        ]);
+
+        if (result) {
+            document.getElementById('status').innerText = "發送流程完成";
+            liff.closeWindow();
+        } else {
+            document.getElementById('status').innerText = "使用者取消了分享";
         }
+    } catch (error) {
+        alert("發送失敗: " + error.message);
     }
+}
 
     initLiff();
 </script>
