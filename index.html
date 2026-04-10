@@ -8,19 +8,19 @@
     <style>
         :root { --wood: #dcc2a1; --dark: #3e2723; --bg: #0a0a0a; }
         body { font-family: sans-serif; background: var(--bg); color: white; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .card { background: var(--dark); border-radius: 20px; padding: 30px; width: 85%; max-width: 400px; text-align: center; }
+        .card { background: var(--dark); border-radius: 20px; padding: 25px; width: 85%; max-width: 400px; text-align: center; }
         h2 { color: var(--wood); margin-bottom: 20px; }
-        input { width: 100%; padding: 14px; margin-bottom: 20px; border-radius: 12px; border: 1px solid var(--wood); background: #2a1b19; color: white; box-sizing: border-box; font-size: 16px; outline: none; }
-        button { width: 100%; padding: 16px; background: var(--wood); color: var(--dark); border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 18px; }
+        input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 10px; border: 1.5px solid var(--wood); background: #2a1b19; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: var(--wood); color: var(--dark); border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
         #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 100; color: var(--wood); }
     </style>
 </head>
 <body>
 
-<div id="loader">初始化中...</div>
+<div id="loader">讀取中...</div>
 
 <div class="card" id="app" style="display:none;">
-    <h2>白六世界時鐘</h2>
+    <h2 style="color:#dcc2a1;">世界時鐘分享</h2>
     <input type="text" id="greeting" value="看一看現在的精確時間！">
     <button onclick="send()">選擇好友發送</button>
 </div>
@@ -33,25 +33,21 @@
             await liff.init({ liffId: LIFF_ID });
             const params = new URLSearchParams(window.location.search);
             
-            // 收件人點擊連結帶參數時，直接跳轉
+            // 跳轉邏輯
             if (params.get('action') === 'play') {
-                window.location.replace("index2.html");
-                return;
-            }
-
-            if (!liff.isLoggedIn()) {
-                liff.login();
+                window.location.href = "index2.html";
                 return;
             }
 
             document.getElementById('loader').style.display = 'none';
             document.getElementById('app').style.display = 'block';
+
+            if (!liff.isLoggedIn()) { liff.login(); }
         } catch (e) { console.error(e); }
     }
 
     async function send() {
-        const txt = document.getElementById('greeting').value || "送給你一個精緻的世界時鐘";
-        // 使用帶參數的 LIFF URL
+        const txt = document.getElementById('greeting').value;
         const link = `https://liff.line.me/${LIFF_ID}/?action=play`;
 
         const msg = [{
@@ -63,17 +59,16 @@
                     "type": "box",
                     "layout": "vertical",
                     "backgroundColor": "#3e2723",
-                    "paddingAll": "25px",
+                    "paddingAll": "20px",
                     "contents": [
-                        { "type": "text", "text": "WORLD CLOCK", "color": "#dcc2a1", "size": "xs", "weight": "bold", "letterSpacing": "2px" },
+                        { "type": "text", "text": "WORLD CLOCK", "color": "#dcc2a1", "size": "xs", "weight": "bold" },
                         { "type": "text", "text": txt, "color": "#ffffff", "wrap": true, "weight": "bold", "margin": "md" },
                         {
                             "type": "button",
                             "action": { "type": "uri", "label": "開啟時鐘", "uri": link },
                             "style": "primary",
                             "color": "#dcc2a1",
-                            "margin": "xl",
-                            "height": "sm"
+                            "margin": "lg"
                         }
                     ]
                 }
@@ -81,12 +76,12 @@
         }];
 
         try {
-            const res = await liff.shareTargetPicker(msg);
-            if (res) {
+            const result = await liff.shareTargetPicker(msg);
+            if (result) {
                 liff.closeWindow();
             }
         } catch (e) {
-            alert("發送失敗，請確認 Scopes 已按下 Update");
+            alert("發送失敗");
         }
     }
     window.onload = init;
