@@ -3,51 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>白六世界時鐘分享器</title>
+    <title>白六世界時鐘分享</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         :root { --wood: #dcc2a1; --dark: #3e2723; --bg: #0a0a0a; }
-        body { font-family: -apple-system, "Noto Sans TC", sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; height: 100vh; color: white; }
-        .card { background: var(--dark); border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 90%; max-width: 450px; box-sizing: border-box; }
-        h2 { color: var(--wood); text-align: center; margin-bottom: 20px; }
-        .field { margin-bottom: 15px; width: 100%; }
-        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; color: var(--wood); }
-        input { width: 100%; padding: 12px; border: 1.5px solid var(--wood); border-radius: 12px; background: #2a1b19; color: white; outline: none; font-size: 14px; box-sizing: border-box; }
-        .btn-send { width: 100%; padding: 16px; background: var(--wood); color: var(--dark); border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; height: 100vh; color: white; }
+        .card { background: var(--dark); border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 90%; max-width: 400px; box-sizing: border-box; text-align: center; }
+        h2 { color: var(--wood); margin-bottom: 25px; }
+        input { width: 100%; padding: 14px; border: 1.5px solid var(--wood); border-radius: 12px; background: #2a1b19; color: white; outline: none; box-sizing: border-box; font-size: 16px; margin-bottom: 20px; }
+        .btn-send { width: 100%; padding: 16px; background: var(--wood); color: var(--dark); border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>⏰ 世界時鐘分享</h2>
-    <div class="field">
-        <label>自訂問候語</label>
-        <input type="text" id="greeting" value="送給你一個機械感十足的世界時鐘！">
-    </div>
-    <button class="btn-send" onclick="sendFlex()">選擇好友發送</button>
+    <h2>白六世界時鐘</h2>
+    <input type="text" id="greeting" value="這是一個機械感十足的世界時鐘！">
+    <button class="btn-send" onclick="sendFlex()">選擇好友寄送</button>
 </div>
 
 <script>
-    // 您的世界時鐘 LIFF ID
     const LIFF_ID = "2009222789-jxWTouxO";
+    // 這裡直接使用 LIFF URL 確保跳轉成功
+    const LIFF_URL = `https://liff.line.me/${LIFF_ID}`;
 
     async function init() {
         try {
             await liff.init({ liffId: LIFF_ID });
-            if (!liff.isLoggedIn()) { liff.login(); }
-        } catch (e) { console.error(e); }
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            }
+        } catch (e) {
+            console.error("Init Error", e);
+        }
     }
 
     async function sendFlex() {
-        const greeting = document.getElementById('greeting').value || "看一看現在的精確時間！";
+        const greeting = document.getElementById('greeting').value || "送給你一個精緻的世界時鐘";
         
-        [span_0](start_span)// 模仿 YouTube 案例，使用 LIFF URL 作為導向網址[span_0](end_span)
-        [span_1](start_span)// 當使用者點擊時，會開啟您的 Endpoint URL (index2.html)[span_1](end_span)
-        const playLink = `https://liff.line.me/${LIFF_ID}`;
-
+        // 結構完全比照您的 YouTube 成功案例
         const flexMsg = [{
             "type": "flex",
-            "altText": "⏰ 白六送來了世界時鐘",
+            "altText": "🎥 白六送來了世界時鐘",
             "contents": {
                 "type": "bubble",
                 "hero": {
@@ -56,7 +53,7 @@
                     "size": "full",
                     "aspectRatio": "16:9",
                     "aspectMode": "cover",
-                    "action": { "type": "uri", "uri": playLink }
+                    "action": { "type": "uri", "uri": LIFF_URL }
                 },
                 "body": {
                     "type": "box",
@@ -69,8 +66,7 @@
                 },
                 "footer": {
                     "type": "box",
-                    "layout": "horizontal",
-                    "spacing": "md",
+                    "layout": "vertical",
                     "backgroundColor": "#3e2723",
                     "contents": [
                         {
@@ -80,8 +76,8 @@
                             "height": "sm",
                             "action": {
                                 "type": "uri",
-                                "label": "開啟時鐘",
-                                "uri": playLink
+                                "label": "開啟世界時鐘",
+                                "uri": LIFF_URL
                             }
                         }
                     ]
@@ -90,15 +86,11 @@
         }];
 
         try {
-            if (!liff.isInClient()) {
-                alert("請在 LINE App 內操作");
-                return;
-            }
-            // 呼叫分享視窗
+            // 直接呼叫，不進行 if 檢查
             await liff.shareTargetPicker(flexMsg);
             liff.closeWindow();
         } catch (e) {
-            alert("發送失敗，請確認 Scopes 權限");
+            alert("請確認 Scopes 勾選了 shareTargetPicker 並 Update");
         }
     }
 
