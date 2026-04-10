@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>機械六邊型時鐘 - PC 相容版</title>
+    <style>
+        :root {
+            --wood-color: #dcc2a1;
+            --bg-frame: #3e2723;
+            --bg-body: #0a0a0a;
+            --seg-thickness: 18px; 
+            --clock-scale: 0.62;
+            --clock-gap: 6px;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: white;
+            margin: 0;
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            /* 強化 PC 端的 3D 透視感 */
+            perspective: 3000px;
+        }
+
+        .clocks-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            padding: 20px;
+        }
+
+        .clock-card {
+            background: var(--bg-frame);
+            padding: 40px 20px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 500px; /* PC 端基礎寬度 */
+        }
+
+        .info-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 30px;
+            margin-bottom: 25px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .city-name { font-size: 1.4rem; color: var(--wood-color); font-weight: bold; border-bottom: 3px solid; }
+        .date-text { font-size: 1.2rem; opacity: 0.8; }
+
+        .clock-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--clock-gap);
+            width: 100%;
+            transform: scale(var(--clock-scale));
+            transform-origin: center;
+        }
+
+        .digit { 
+            position: relative; 
+            width: 76px; 
+            height: 130px; 
+            background: transparent; 
+            flex-shrink: 0;
+            transform-style: preserve-3d;
+        }
+
+        .segment { 
+            position: absolute; 
+            transform-style: preserve-3d; 
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); 
+            background: var(--wood-color);
+            pointer-events: none;
+        }
+
+        .seg-h { 
+            clip-path: polygon(12% 0%, 88% 0%, 100% 50%, 88% 100%, 12% 100%, 0% 50%);
+            height: var(--seg-thickness);
+            transform: rotateX(-90deg); 
+            transform-origin: top center;
+        }
+
+        .seg-v { 
+            clip-path: polygon(50% 0%, 100% 12%, 100% 88%, 50% 100%, 0% 88%, 0% 12%);
+            width: var(--seg-thickness);
+            transform: rotateY(-90deg); 
+            transform-origin: left center;
+        }
+
+        /* 物理懸浮狀態 */
+        .segment.on { 
+            transform: rotateX(0deg) rotateY(0deg) translateZ(15px); 
+        }
+
+        /* 陰影層 */
+        .segment::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            transition: transform 0.6s, opacity 0.6s;
+            opacity: 0;
+            filter: blur(6px);
+            z-index: -1;
+            clip-path: inherit;
+        }
+
+        .segment.on::after {
+            opacity: 1;
+            transform: translate(10px, 12px); 
+        }
+
+        /* 幾何定位 */
+        .seg-a { top: 4px; left: 14px; right: 14px; }
+        .seg-b { top: 10px; right: 4px; height: 52px; }
+        .seg-c { top: 68px; right: 4px; height: 52px; }
+        .seg-d { bottom: 4px; left: 14px; right: 14px; }
+        .seg-e { top: 68px; left: 4px; height: 52px; }
+        .seg-f { top: 10px; left: 4px; height: 52px; }
+        .seg-g { top: 56px; left: 14px; right: 14px; }
+
+        .sep { color: var(--wood-color); font-size: 3rem; font-weight: bold; margin: 0 5px; opacity: 0.5; padding-bottom: 15px; }
+
+        /* 選單樣式 */
+        #menuOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); display: none; flex-direction: column; z-index: 999;
+        }
+        .menu-header { padding: 30px; border-bottom: 1px solid #444; display: flex; justify-content: space-between; font-size: 1.5rem; }
+        .city-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .city-item { padding: 20px 40px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; cursor: pointer; transition: background 0.3s; }
+        .city-item:hover { background: #1a1a1a; }
+    </style>
+</head>
+<body>
+
+    <div class="clocks-wrapper">
+        <div class="clock-card">
+            <div class="info-bar" onclick="openMenu(1)">
+                <div class="city-name" id="name1">台北</div>
+                <div class="date-text" id="date1">--/--</div>
+            </div>
+            <div class="clock-row" id="c1"></div>
+        </div>
+        <div class="clock-card">
+            <div class="info-bar" onclick="openMenu(2)">
+                <div class="city-name" id="name2">倫敦</div>
+                <div class="date-text" id="date2">--/--</div>
+            </div>
+            <div class="clock-row" id="c2"></div>
+        </div>
+    </div>
+
+    <div id="menuOverlay">
+        <div class="menu-header">
+            <span style="color:var(--wood-color)">選擇時區城市</span>
+            <span onclick="closeMenu()" style="cursor:pointer">✕ 關閉</span>
+        </div>
+        <div class="city-list" id="cityList"></div>
+    </div>
+
+<script>
+    const cityData = [
+        { name: "檀香山", off: -10 }, { name: "洛杉磯", off: -7 }, { name: "紐約", off: -4 },
+        { name: "倫敦", off: 0 }, { name: "巴黎", off: 1 }, { name: "開羅", off: 2 },
+        { name: "杜拜", off: 4 }, { name: "曼谷", off: 7 }, { name: "台北", off: 8 },
+        { name: "東京", off: 9 }, { name: "雪梨", off: 11 }
+    ].sort((a,b) => a.off - b.off);
+
+    const digitMap = {
+        0:[1,1,1,1,1,1,0], 1:[0,1,1,0,0,0,0], 2:[1,1,0,1,1,0,1], 3:[1,1,1,1,0,0,1],
+        4:[0,1,1,0,0,1,1], 5:[1,0,1,1,0,1,1], 6:[1,0,1,1,1,1,1], 7:[1,1,1,0,0,0,0],
+        8:[1,1,1,1,1,1,1], 9:[1,1,1,1,0,1,1]
+    };
+
+    let state = {
+        c1: { off: 8, name: "台北", cur: [8,8,8,8,8,8], digitLocks: [true,true,true,true,true,true] },
+        c2: { off: 0, name: "倫敦", cur: [8,8,8,8,8,8], digitLocks: [true,true,true,true,true,true] }
+    };
+
+    function buildClock(id) {
+        const root = document.getElementById(id);
+        const parts = ['h1','h2','s1','m1','m2','s2','sc1','sc2'];
+        parts.forEach(p => {
+            if(p.startsWith('s') && !p.startsWith('sc')) {
+                const s = document.createElement('div');
+                s.className = 'sep'; s.innerText = ':';
+                root.appendChild(s);
+            } else {
+                const d = document.createElement('div');
+                d.className = 'digit'; d.id = `${id}-${p}`;
+                ['a','b','c','d','e','f','g'].forEach((seg, i) => {
+                    const div = document.createElement('div');
+                    div.className = `segment seg-${seg} ${[1,2,4,5].includes(i)?'seg-v':'seg-h'}`;
+                    d.appendChild(div);
+                });
+                root.appendChild(d);
+            }
+        });
+    }
+
+    function draw(clockId, partIdx, val) {
+        const keys = ['h1','h2','m1','m2','sc1','sc2'];
+        const el = document.getElementById(`${clockId}-${keys[partIdx]}`);
+        if (!el) return;
+        const segs = el.children;
+        const pattern = digitMap[val];
+        for(let i=0; i<7; i++) {
+            pattern[i] ? segs[i].classList.add('on') : segs[i].classList.remove('on');
+        }
+    }
+
+    function getTimeDigits(off) {
+        const now = new Date();
+        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const t = new Date(utc + (3600000 * off));
+        const h = String(t.getHours()).padStart(2,'0');
+        const m = String(t.getMinutes()).padStart(2,'0');
+        const s = String(t.getSeconds()).padStart(2,'0');
+        return { digits: (h+m+s).split('').map(Number), date: `${t.getMonth()+1}/${t.getDate()}` };
+    }
+
+    async function runTransition(clockKey) {
+        const clockState = state[clockKey];
+        clockState.digitLocks = [true,true,true,true,true,true];
+        clockState.cur = [8,8,8,8,8,8];
+        clockState.cur.forEach((v, idx) => draw(clockKey, idx, 8));
+
+        const speeds = [300, 300, 180, 180, 80, 80]; 
+
+        for (let i = 5; i >= 0; i--) {
+            await new Promise(resolve => {
+                const timer = setInterval(() => {
+                    const target = getTimeDigits(clockState.off).digits[i];
+                    if (clockState.cur[i] === target) {
+                        clearInterval(timer);
+                        clockState.digitLocks[i] = false;
+                        resolve();
+                        return;
+                    }
+                    clockState.cur[i] = (clockState.cur[i] - 1 + 10) % 10;
+                    draw(clockKey, i, clockState.cur[i]);
+                }, speeds[i]);
+            });
+        }
+    }
+
+    function update() {
+        ['c1', 'c2'].forEach(key => {
+            const clock = state[key];
+            const t = getTimeDigits(clock.off);
+            const dateEl = document.getElementById(`date${key.slice(1)}`);
+            const nameEl = document.getElementById(`name${key.slice(1)}`);
+            if(dateEl) dateEl.innerText = t.date;
+            if(nameEl) nameEl.innerText = clock.name;
+
+            t.digits.forEach((val, i) => {
+                if (!clock.digitLocks[i]) {
+                    clock.cur[i] = val;
+                    draw(key, i, val);
+                }
+            });
+        });
+    }
+
+    function openMenu(idx) {
+        const list = document.getElementById('cityList');
+        list.innerHTML = '';
+        cityData.forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'city-item';
+            div.innerHTML = `<span>${c.name}</span><span style="opacity:0.4">UTC ${c.off>=0?'+':''}${c.off}</span>`;
+            div.onclick = () => {
+                const key = `c${idx}`;
+                state[key].off = c.off;
+                state[key].name = c.name;
+                closeMenu();
+                runTransition(key);
+            };
+            list.appendChild(div);
+        });
+        document.getElementById('menuOverlay').style.display = 'flex';
+    }
+
+    function closeMenu() { document.getElementById('menuOverlay').style.display = 'none'; }
+
+    // 初始化程序
+    window.onload = () => {
+        buildClock('c1');
+        buildClock('c2');
+        runTransition('c1');
+        runTransition('c2');
+        setInterval(update, 1000);
+    };
+</script>
+</body>
+</html>
