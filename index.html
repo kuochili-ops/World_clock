@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>白六 Line 世界時鐘 - 分享</title>
+    <title>白六 Line 世界時鐘 - 分享器</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         :root {
@@ -20,8 +20,7 @@
             align-items: center;
             justify-content: center;
             height: 100vh;
-            margin: 0;
-            padding: 20px;
+            margin: 0; padding: 20px;
             box-sizing: border-box;
         }
         .container {
@@ -33,11 +32,11 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             text-align: center;
         }
-        h2 { color: var(--wood-color); margin-bottom: 25px; }
+        h2 { color: var(--wood-color); margin-top: 0; }
         input {
             width: 100%;
             padding: 12px;
-            margin-bottom: 20px;
+            margin: 20px 0;
             border-radius: 8px;
             border: 1px solid var(--wood-color);
             background: #2a1b19;
@@ -55,49 +54,53 @@
             font-weight: bold;
             font-size: 1.1rem;
             cursor: pointer;
-            transition: opacity 0.2s;
         }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        #status { margin-top: 15px; font-size: 0.9rem; color: #aaa; }
+        button:disabled { opacity: 0.3; }
+        #log { margin-top: 15px; font-size: 0.8rem; color: #888; text-align: left; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h2>白六世界時鐘</h2>
-        <input type="text" id="greeting" placeholder="輸入問候語 (例如：早安！)" value="這是一個機械感十足的世界時鐘！">
-        <button id="btnShare" disabled>點選聯絡人並寄送</button>
-        <p id="status">正在初始化 LIFF...</p>
+        <input type="text" id="greeting" placeholder="輸入問候語..." value="送給你一個機械感十足的世界時鐘！">
+        <button id="btnShare" onclick="sendShare()">點選聯絡人並寄送</button>
+        <div id="log">正在檢查 LIFF 狀態...</div>
     </div>
 
 <script>
-    // 請將此處替換為您的 LIFF ID
     const MY_LIFF_ID = '2009222789-jxWTouxO'; 
     const CLOCK_URL = 'https://kuochili-ops.github.io/World_clock/index2.html';
+
+    function setLog(msg) {
+        document.getElementById('log').innerText = msg;
+    }
 
     async function initLiff() {
         try {
             await liff.init({ liffId: MY_LIFF_ID });
             if (!liff.isLoggedIn()) {
+                setLog("尚未登入，跳轉中...");
                 liff.login();
             } else {
-                document.getElementById('btnShare').disabled = false;
-                document.getElementById('status').innerText = '準備就緒';
+                setLog("LIFF 已就緒");
             }
         } catch (err) {
-            document.getElementById('status').innerText = '初始化失敗: ' + err;
+            setLog("初始化失敗: " + err.message);
         }
     }
 
     async function sendShare() {
-        const greeting = document.getElementById('greeting').value || '送給你一個精緻的世界時鐘';
+        const greetingText = document.getElementById('greeting').value;
         
+        // 1. 檢查功能是否可用
         if (!liff.isApiAvailable('shareTargetPicker')) {
-            alert('此環境不支援分享功能，請在 LINE 內開啟。');
+            alert('請檢查 LINE Developers 後台是否已開啟 shareTargetPicker 權限。');
             return;
         }
 
         try {
+            // 2. 呼叫分享視窗
             const result = await liff.shareTargetPicker([
                 {
                     "type": "flex",
@@ -105,85 +108,49 @@
                     "contents": {
                         "type": "bubble",
                         "size": "medium",
-                        "header": {
-                            "type": "box",
-                            "layout": "vertical",
-                            "contents": [
-                                {
-                                    "type": "text",
-                                    "text": greeting,
-                                    "color": "#dcc2a1",
-                                    "weight": "bold",
-                                    "size": "sm",
-                                    "wrap": true
-                                }
-                            ],
-                            "backgroundColor": "#3e2723"
-                        },
-                        "hero": {
-                            "type": "image",
-                            "url": "https://images.unsplash.com/photo-1508962301584-53cd991c68e1?auto=format&fit=crop&q=80&w=1000",
-                            "size": "full",
-                            "aspectRatio": "20:13",
-                            "aspectMode": "cover"
-                        },
                         "body": {
                             "type": "box",
                             "layout": "vertical",
                             "contents": [
+                                { "type": "text", "text": "WORLD CLOCK", "weight": "bold", "color": "#dcc2a1", "size": "sm" },
+                                { "type": "text", "text": greetingText, "weight": "bold", "size": "md", "margin": "md", "color": "#ffffff", "wrap": true },
+                                { "type": "separator", "margin": "xxl", "color": "#3e2723" },
                                 {
-                                    "type": "text",
-                                    "text": "白六世界時鐘",
-                                    "weight": "bold",
-                                    "size": "xl",
-                                    "color": "#dcc2a1"
-                                },
-                                {
-                                    "type": "text",
-                                    "text": "機械六邊型板段驅動時鐘",
-                                    "size": "xs",
-                                    "color": "#aaaaaa",
-                                    "margin": "sm"
+                                    "type": "box",
+                                    "layout": "vertical",
+                                    "margin": "xxl",
+                                    "contents": [
+                                        {
+                                            "type": "button",
+                                            "action": {
+                                                "type": "uri",
+                                                "label": "開啟世界時鐘",
+                                                "uri": CLOCK_URL
+                                            },
+                                            "style": "primary",
+                                            "color": "#dcc2a1"
+                                        }
+                                    ]
                                 }
                             ],
-                            "backgroundColor": "#0a0a0a"
-                        },
-                        "footer": {
-                            "type": "box",
-                            "layout": "vertical",
-                            "contents": [
-                                {
-                                    "type": "button",
-                                    "action": {
-                                        "type": "uri",
-                                        "label": "立即查看時間",
-                                        "uri": CLOCK_URL
-                                    },
-                                    "style": "primary",
-                                    "color": "#3e2723"
-                                }
-                            ],
-                            "backgroundColor": "#0a0a0a"
-                        },
-                        "styles": {
-                            "footer": {
-                                "separator": true
-                            }
+                            "backgroundColor": "#3e2723"
                         }
                     }
                 }
             ]);
 
             if (result) {
-                // 寄送成功後關閉視窗
-                liff.closeWindow();
+                setLog("訊息已送出！");
+                setTimeout(() => liff.closeWindow(), 1500);
+            } else {
+                setLog("取消分享");
             }
         } catch (error) {
-            console.error('寄送失敗', error);
+            setLog("傳送錯誤: " + error.message);
+            console.error(error);
         }
     }
 
-    document.getElementById('btnShare').addEventListener('click', sendShare);
     initLiff();
 </script>
 </body>
