@@ -3,31 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>白六世界時鐘分享器</title>
+    <title>白六世界時鐘</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        :root { --wood: #dcc2a1; --dark: #3e2723; --bg: #0a0a0a; }
-        body { font-family: -apple-system, "Noto Sans TC", sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; height: 100vh; color: white; }
-        .card { background: var(--dark); border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 90%; max-width: 450px; box-sizing: border-box; }
-        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 100; }
-        h2 { color: var(--wood); text-align: center; margin-bottom: 20px; }
-        .field { margin-bottom: 15px; width: 100%; }
-        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; color: var(--wood); }
-        input { width: 100%; padding: 12px; border: 1.5px solid var(--wood); border-radius: 12px; background: #2a1b19; color: white; outline: none; font-size: 14px; box-sizing: border-box; }
-        .btn-send { width: 100%; padding: 16px; background: var(--wood); color: var(--dark); border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        body { font-family: sans-serif; background: #0a0a0a; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .card { background: #3e2723; border-radius: 20px; padding: 25px; width: 85%; max-width: 400px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 10px; border: 1px solid #dcc2a1; background: #2a1b19; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #dcc2a1; color: #3e2723; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div id="loadingOverlay">系統處理中...</div>
+<div id="loader" style="position:fixed;">讀取中...</div>
 
-<div class="card" id="editorUI" style="display: none;">
-    <h2>⏰ 世界時鐘分享</h2>
-    <div class="field">
-        <label>問候語</label>
-        <input type="text" id="greeting" value="看一看現在的精確時間！">
-    </div>
-    <button class="btn-send" onclick="sendFlex()">選擇好友發送</button>
+<div class="card" id="app" style="display:none;">
+    <h2 style="color:#dcc2a1;">世界時鐘分享</h2>
+    <input type="text" id="greeting" value="看一看現在的精確時間！">
+    <button onclick="send()">選擇好友發送</button>
 </div>
 
 <script>
@@ -36,75 +28,57 @@
     async function init() {
         try {
             await liff.init({ liffId: LIFF_ID });
-            
-            // 取得網址參數
             const params = new URLSearchParams(window.location.search);
             
-            // 邏輯判斷：如果帶有 action=play，跳轉到 index2.html
+            // 如果帶有 action 參數，直接跳轉 index2.html
             if (params.get('action') === 'play') {
-                window.location.href = "index2.html"; 
+                window.location.href = "index2.html";
                 return;
             }
 
-            // 否則顯示編輯介面
-            document.getElementById('loadingOverlay').style.display = 'none';
-            document.getElementById('editorUI').style.display = 'block';
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
 
-            if (!liff.isLoggedIn()) {
-                liff.login();
-            }
-        } catch (e) {
-            console.error(e);
-            document.getElementById('loadingOverlay').innerText = "系統初始化失敗";
-        }
+            if (!liff.isLoggedIn()) { liff.login(); }
+        } catch (e) { console.error(e); }
     }
 
-    async function sendFlex() {
-        const greeting = document.getElementById('greeting').value || "送給你一個精緻的世界時鐘";
-        
-        // 模仿成功案例邏輯：使用 LIFF URL 帶上參數
-        const playLink = `https://liff.line.me/${LIFF_ID}/?action=play`;
+    async function send() {
+        const txt = document.getElementById('greeting').value;
+        // 模仿成功案例使用帶參數的 LIFF URL
+        const link = `https://liff.line.me/${LIFF_ID}/?action=play`;
 
-        const flexMsg = [{
-            "type": "flex",
-            "altText": "⏰ 白六送來了世界時鐘",
-            "contents": {
+        const msg = [{
+            type: "flex",
+            altText: "⏰ 白六世界時鐘",
+            contents: {
                 "type": "bubble",
                 "hero": {
                     "type": "image",
-                    "url": "https://images.unsplash.com/photo-1508962301584-53cd991c68e1?auto=format&fit=crop&q=80&w=1000",
-                    "size": "full", "aspectRatio": "16:9", "aspectMode": "cover",
-                    "action": { "type": "uri", "uri": playLink }
+                    "url": "https://images.unsplash.com/photo-1508962301584-53cd991c68e1?w=1000",
+                    "size": "full", "aspectRatio": "20:13", "aspectMode": "cover",
+                    "action": { "type": "uri", "uri": link }
                 },
                 "body": {
                     "type": "box", "layout": "vertical", "backgroundColor": "#3e2723",
                     "contents": [
-                        { "type": "text", "text": "WORLD CLOCK", "color": "#dcc2a1", "size": "xs", "weight": "bold", "letterSpacing": "2px" },
-                        { "type": "text", "text": greeting, "color": "#ffffff", "margin": "md", "wrap": true, "weight": "bold", "size": "md" }
+                        { "type": "text", "text": txt, "color": "#ffffff", "wrap": true, "weight": "bold" }
                     ]
                 },
                 "footer": {
                     "type": "box", "layout": "vertical", "backgroundColor": "#3e2723",
                     "contents": [
-                        {
-                            "type": "button", "style": "primary", "color": "#dcc2a1",
-                            "action": { "type": "uri", "label": "開啟世界時鐘", "uri": playLink }
-                        }
+                        { "type": "button", "action": { "type": "uri", "label": "開啟時鐘", "uri": link }, "style": "primary", "color": "#dcc2a1" }
                     ]
                 }
             }
         }];
 
         try {
-            const result = await liff.shareTargetPicker(flexMsg);
-            if (result) {
-                liff.closeWindow();
-            }
-        } catch (e) {
-            alert("發送失敗，請確認後台 Scopes 是否已更新。");
-        }
+            await liff.shareTargetPicker(msg);
+            liff.closeWindow();
+        } catch (e) { alert("發送失敗"); }
     }
-
     window.onload = init;
 </script>
 </body>
