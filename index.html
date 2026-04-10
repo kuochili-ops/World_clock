@@ -7,8 +7,9 @@
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         :root { --wood: #dcc2a1; --dark: #3e2723; --bg: #0a0a0a; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; height: 100vh; color: white; }
+        body { font-family: -apple-system, "Noto Sans TC", sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; height: 100vh; color: white; }
         .card { background: var(--dark); border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 90%; max-width: 450px; box-sizing: border-box; }
+        #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 100; }
         h2 { color: var(--wood); text-align: center; margin-bottom: 20px; }
         .field { margin-bottom: 15px; width: 100%; }
         label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; color: var(--wood); }
@@ -18,7 +19,9 @@
 </head>
 <body>
 
-<div class="card">
+<div id="loadingOverlay">正在開啟時鐘...</div>
+
+<div class="card" id="editorUI" style="display: none;">
     <h2>⏰ 世界時鐘分享</h2>
     <div class="field">
         <label>問候語</label>
@@ -33,20 +36,38 @@
     async function init() {
         try {
             await liff.init({ liffId: LIFF_ID });
-            if (!liff.isLoggedIn()) { liff.login(); }
-        } catch (e) { console.error(e); }
+            
+            // 取得網址參數
+            const params = new URLSearchParams(window.location.search);
+            
+            // 判斷邏輯：如果帶有 action=play，跳轉到 index2.html
+            if (params.get('action') === 'play') {
+                window.location.href = "index2.html"; 
+                return;
+            }
+
+            // 否則顯示編輯介面
+            document.getElementById('loadingOverlay').style.display = 'none';
+            document.getElementById('editorUI').style.display = 'block';
+
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            }
+        } catch (e) {
+            console.error(e);
+            document.getElementById('loadingOverlay').innerText = "系統初始化失敗";
+        }
     }
 
     async function sendFlex() {
-        const greeting = document.getElementById('greeting').value;
+        const greeting = document.getElementById('greeting').value || "送給你一個精緻的世界時鐘";
         
-        // 關鍵：使用 LIFF URL 而非直接的 github 網址
-        // 這樣點擊後會由 LINE 自動開啟 index2.html (假設您後台 Endpoint URL 是 index2.html)
-        const playLink = `https://liff.line.me/${LIFF_ID}`;
+        // 關鍵：寄出的連結必須帶有 ?action=play 參數
+        const playLink = `https://liff.line.me/${LIFF_ID}/?action=play`;
 
         const flexMsg = [{
             "type": "flex",
-            "altText": "🎥 白六送來了世界時鐘",
+            "altText": "⏰ 白六送來了世界時鐘",
             "contents": {
                 "type": "bubble",
                 "hero": {
@@ -58,8 +79,8 @@
                 "body": {
                     "type": "box", "layout": "vertical", "backgroundColor": "#3e2723",
                     "contents": [
-                        { "type": "text", "text": "WORLD CLOCK", "color": "#dcc2a1", "size": "xs", "weight": "bold" },
-                        { "type": "text", "text": greeting, "color": "#ffffff", "margin": "md", "wrap": true, "weight": "bold" }
+                        { "type": "text", "text": "WORLD CLOCK", "color": "#dcc2a1", "size": "xs", "weight": "bold", "letterSpacing": "2px" },
+                        { "type": "text", "text": greeting, "color": "#ffffff", "margin": "md", "wrap": true, "weight": "bold", "size": "md" }
                     ]
                 },
                 "footer": {
@@ -67,7 +88,7 @@
                     "contents": [
                         {
                             "type": "button", "style": "primary", "color": "#dcc2a1",
-                            "action": { "type": "uri", "label": "開啟時鐘", "uri": playLink }
+                            "action": { "type": "uri", "label": "開啟世界時鐘", "uri": playLink }
                         }
                     ]
                 }
@@ -75,10 +96,12 @@
         }];
 
         try {
-            await liff.shareTargetPicker(flexMsg);
-            liff.closeWindow();
+            const result = await liff.shareTargetPicker(flexMsg);
+            if (result) {
+                liff.closeWindow();
+            }
         } catch (e) {
-            alert("發送失敗，請確認後台 Scopes 是否勾選 shareTargetPicker");
+            alert("發送失敗，請確認後台 Scopes 勾選了 shareTargetPicker");
         }
     }
 
