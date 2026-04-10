@@ -3,45 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>白六世界時鐘分享</title>
+    <title>白六世界時鐘分享器</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         :root { --wood: #dcc2a1; --dark: #3e2723; --bg: #0a0a0a; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; height: 100vh; color: white; }
-        .card { background: var(--dark); border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 90%; max-width: 400px; box-sizing: border-box; text-align: center; }
-        h2 { color: var(--wood); margin-bottom: 25px; }
-        input { width: 100%; padding: 14px; border: 1.5px solid var(--wood); border-radius: 12px; background: #2a1b19; color: white; outline: none; box-sizing: border-box; font-size: 16px; margin-bottom: 20px; }
-        .btn-send { width: 100%; padding: 16px; background: var(--wood); color: var(--dark); border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; }
+        .card { background: var(--dark); border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 90%; max-width: 450px; box-sizing: border-box; }
+        h2 { color: var(--wood); text-align: center; margin-bottom: 20px; }
+        .field { margin-bottom: 15px; width: 100%; }
+        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; color: var(--wood); }
+        input { width: 100%; padding: 12px; border: 1.5px solid var(--wood); border-radius: 12px; background: #2a1b19; color: white; outline: none; font-size: 14px; box-sizing: border-box; }
+        .btn-send { width: 100%; padding: 16px; background: var(--wood); color: var(--dark); border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>白六世界時鐘</h2>
-    <input type="text" id="greeting" value="這是一個機械感十足的世界時鐘！">
-    <button class="btn-send" onclick="sendFlex()">選擇好友寄送</button>
+    <h2>⏰ 世界時鐘分享</h2>
+    <div class="field">
+        <label>問候語</label>
+        <input type="text" id="greeting" value="看一看現在的精確時間！">
+    </div>
+    <button class="btn-send" onclick="sendFlex()">選擇好友發送</button>
 </div>
 
 <script>
     const LIFF_ID = "2009222789-jxWTouxO";
-    // 這裡直接使用 LIFF URL 確保跳轉成功
-    const LIFF_URL = `https://liff.line.me/${LIFF_ID}`;
 
     async function init() {
         try {
             await liff.init({ liffId: LIFF_ID });
-            if (!liff.isLoggedIn()) {
-                liff.login();
-            }
-        } catch (e) {
-            console.error("Init Error", e);
-        }
+            if (!liff.isLoggedIn()) { liff.login(); }
+        } catch (e) { console.error(e); }
     }
 
     async function sendFlex() {
-        const greeting = document.getElementById('greeting').value || "送給你一個精緻的世界時鐘";
+        const greeting = document.getElementById('greeting').value;
         
-        // 結構完全比照您的 YouTube 成功案例
+        // 關鍵：使用 LIFF URL 而非直接的 github 網址
+        // 這樣點擊後會由 LINE 自動開啟 index2.html (假設您後台 Endpoint URL 是 index2.html)
+        const playLink = `https://liff.line.me/${LIFF_ID}`;
+
         const flexMsg = [{
             "type": "flex",
             "altText": "🎥 白六送來了世界時鐘",
@@ -50,35 +52,22 @@
                 "hero": {
                     "type": "image",
                     "url": "https://images.unsplash.com/photo-1508962301584-53cd991c68e1?auto=format&fit=crop&q=80&w=1000",
-                    "size": "full",
-                    "aspectRatio": "16:9",
-                    "aspectMode": "cover",
-                    "action": { "type": "uri", "uri": LIFF_URL }
+                    "size": "full", "aspectRatio": "16:9", "aspectMode": "cover",
+                    "action": { "type": "uri", "uri": playLink }
                 },
                 "body": {
-                    "type": "box",
-                    "layout": "vertical",
-                    "backgroundColor": "#3e2723",
+                    "type": "box", "layout": "vertical", "backgroundColor": "#3e2723",
                     "contents": [
-                        { "type": "text", "text": "WORLD CLOCK", "color": "#dcc2a1", "size": "xs", "weight": "bold", "letterSpacing": "2px" },
-                        { "type": "text", "text": greeting, "color": "#ffffff", "margin": "md", "wrap": true, "weight": "bold", "size": "md" }
+                        { "type": "text", "text": "WORLD CLOCK", "color": "#dcc2a1", "size": "xs", "weight": "bold" },
+                        { "type": "text", "text": greeting, "color": "#ffffff", "margin": "md", "wrap": true, "weight": "bold" }
                     ]
                 },
                 "footer": {
-                    "type": "box",
-                    "layout": "vertical",
-                    "backgroundColor": "#3e2723",
+                    "type": "box", "layout": "vertical", "backgroundColor": "#3e2723",
                     "contents": [
                         {
-                            "type": "button",
-                            "style": "primary",
-                            "color": "#dcc2a1",
-                            "height": "sm",
-                            "action": {
-                                "type": "uri",
-                                "label": "開啟世界時鐘",
-                                "uri": LIFF_URL
-                            }
+                            "type": "button", "style": "primary", "color": "#dcc2a1",
+                            "action": { "type": "uri", "label": "開啟時鐘", "uri": playLink }
                         }
                     ]
                 }
@@ -86,11 +75,10 @@
         }];
 
         try {
-            // 直接呼叫，不進行 if 檢查
             await liff.shareTargetPicker(flexMsg);
             liff.closeWindow();
         } catch (e) {
-            alert("請確認 Scopes 勾選了 shareTargetPicker 並 Update");
+            alert("發送失敗，請確認後台 Scopes 是否勾選 shareTargetPicker");
         }
     }
 
