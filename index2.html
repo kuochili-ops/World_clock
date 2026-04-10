@@ -3,145 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>機械六邊型時鐘 - 物理翻板修復版</title>
+    <title>機械六邊型 - 即時解鎖版</title>
     <style>
         :root {
             --wood-color: #dcc2a1;
             --bg-frame: #3e2723;
             --bg-body: #0a0a0a;
-            --seg-thickness: 18px; 
-            --clock-scale: 0.62;
-            --clock-gap: 6px;
+            --seg-thickness: 5vw; /* 改用寬度百分比 */
+            --max-thickness: 16px;
         }
 
         body {
             background-color: var(--bg-body);
             color: white;
             margin: 0;
-            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+            padding: 0;
+            font-family: -apple-system, system-ui, sans-serif;
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            height: 100vh;
             overflow: hidden;
+            perspective: 2000px;
         }
 
-        .clocks-wrapper {
+        .clocks-container {
             flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 30px;
-            padding: 20px;
+            justify-content: space-evenly;
+            padding: 10px;
+            box-sizing: border-box;
         }
 
         .clock-card {
             background: var(--bg-frame);
-            padding: 40px 20px;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            padding: 15px 10px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
             display: flex;
             flex-direction: column;
-            align-items: center;
-            min-width: 500px;
+            min-height: 25vh;
         }
 
         .info-bar {
-            width: 100%;
             display: flex;
             justify-content: space-between;
-            padding: 0 30px;
-            margin-bottom: 25px;
-            cursor: pointer;
-            user-select: none;
+            align-items: center;
+            padding: 0 10px 10px 10px;
+            border-bottom: 1px solid rgba(220, 194, 161, 0.2);
+            margin-bottom: 15px;
+            height: 30px; /* 固定高度確保直式螢幕可見 */
         }
 
-        .city-name { font-size: 1.4rem; color: var(--wood-color); font-weight: bold; border-bottom: 3px solid; }
-        .date-text { font-size: 1.2rem; opacity: 0.8; }
+        .city-group { display: flex; align-items: baseline; gap: 8px; }
+        .city-name { font-size: 1.2rem; color: var(--wood-color); font-weight: bold; }
+        .utc-text { font-size: 0.7rem; opacity: 0.5; color: var(--wood-color); }
+        .date-text { font-size: 1rem; color: var(--wood-color); font-family: monospace; }
 
         .clock-row {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: var(--clock-gap);
-            width: 100%;
-            transform: scale(var(--clock-scale));
-            transform-origin: center;
+            gap: 1.5vw;
+            flex: 1;
         }
 
         .digit { 
             position: relative; 
-            width: 76px; 
-            height: 130px; 
-            background: transparent; 
-            flex-shrink: 0;
+            width: 12vw; 
+            max-width: 70px;
+            aspect-ratio: 1 / 1.7;
+            background: transparent;
         }
 
-        /* 核心修復：使用單一變數控制顯示比例 */
         .segment { 
             position: absolute; 
+            transform-style: preserve-3d; 
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); 
             background: var(--wood-color);
-            pointer-events: none;
-            /* 預設比例為 0，且透明 */
-            --s: 0; 
-            opacity: 0;
-            /* 強制雙向過渡：消失與出現的路徑完全相同 */
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
         }
 
-        /* 顯示狀態：僅改變變數值 */
-        .segment.on { 
-            --s: 1;
-            opacity: 1;
-        }
-
-        /* 水平板段：強制只在 Y 軸依照變數縮放 */
+        /* 響應式板段厚度 */
         .seg-h { 
             clip-path: polygon(12% 0%, 88% 0%, 100% 50%, 88% 100%, 12% 100%, 0% 50%);
-            height: var(--seg-thickness);
-            transform: scaleY(var(--s));
+            height: clamp(8px, 2.5vw, 16px);
+            transform: rotateX(-90deg); 
+            transform-origin: top center;
         }
 
-        /* 垂直板段：強制只在 X 軸依照變數縮放 */
         .seg-v { 
             clip-path: polygon(50% 0%, 100% 12%, 100% 88%, 50% 100%, 0% 88%, 0% 12%);
-            width: var(--seg-thickness);
-            transform: scaleX(var(--s));
+            width: clamp(8px, 2.5vw, 16px);
+            transform: rotateY(-90deg); 
+            transform-origin: left center;
         }
 
-        /* 轉軸細節設定 */
-        .seg-a { top: 4px; left: 14px; right: 14px; transform-origin: top; }
-        .seg-b { top: 10px; right: 4px; height: 52px; transform-origin: right; }
-        .seg-c { top: 68px; right: 4px; height: 52px; transform-origin: right; }
-        .seg-d { bottom: 4px; left: 14px; right: 14px; transform-origin: bottom; }
-        .seg-e { top: 68px; left: 4px; height: 52px; transform-origin: left; }
-        .seg-f { top: 10px; left: 4px; height: 52px; transform-origin: left; }
-        .seg-g { top: 56px; left: 14px; right: 14px; transform-origin: center; }
+        .segment.on { 
+            transform: rotateX(0deg) rotateY(0deg) translateZ(12px); 
+        }
 
-        .sep { color: var(--wood-color); font-size: 3rem; font-weight: bold; margin: 0 5px; opacity: 0.5; padding-bottom: 15px; }
+        /* 強化懸浮陰影 */
+        .segment::after {
+            content: '';
+            position: absolute;
+            background: rgba(0,0,0,0.7);
+            transition: transform 0.6s, opacity 0.6s;
+            opacity: 0;
+            filter: blur(5px);
+            pointer-events: none;
+            z-index: -1;
+            clip-path: inherit;
+            top: 0; left: 0; width: 100%; height: 100%;
+        }
+
+        .segment.on::after {
+            opacity: 1;
+            transform: translate(6px, 8px); 
+        }
+
+        /* 位置定義 */
+        .seg-a { top: 0; left: 15%; right: 15%; }
+        .seg-b { top: 10%; right: 0; height: 35%; }
+        .seg-c { bottom: 10%; right: 0; height: 35%; }
+        .seg-d { bottom: 0; left: 15%; right: 15%; }
+        .seg-e { bottom: 10%; left: 0; height: 35%; }
+        .seg-f { top: 10%; left: 0; height: 35%; }
+        .seg-g { top: 45%; left: 15%; right: 15%; height: clamp(8px, 2.5vw, 16px); }
+
+        .sep { color: var(--wood-color); font-size: 5vw; font-weight: bold; opacity: 0.4; }
 
         #menuOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.92); display: none; flex-direction: column; z-index: 999;
+            background: rgba(0,0,0,0.95); display: none; flex-direction: column; z-index: 100;
         }
-        .menu-header { padding: 30px; border-bottom: 1px solid #444; display: flex; justify-content: space-between; font-size: 1.5rem; }
-        .city-list { flex: 1; overflow-y: auto; padding: 10px; }
-        .city-item { padding: 20px 40px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; cursor: pointer; }
+        .menu-header { padding: 20px; border-bottom: 1px solid #444; display: flex; justify-content: space-between; }
+        .city-list { flex: 1; overflow-y: auto; }
+        .city-item { padding: 20px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
 
-    <div class="clocks-wrapper">
-        <div class="clock-card">
+    <div class="clocks-container">
+        <div class="clock-card" id="card1">
             <div class="info-bar" onclick="openMenu(1)">
-                <div class="city-name" id="name1">台北</div>
+                <div class="city-group">
+                    <div class="city-name" id="name1">台北</div>
+                    <div class="utc-text" id="utc1">UTC +8</div>
+                </div>
                 <div class="date-text" id="date1">--/--</div>
             </div>
             <div class="clock-row" id="c1"></div>
         </div>
-        <div class="clock-card">
+
+        <div class="clock-card" id="card2">
             <div class="info-bar" onclick="openMenu(2)">
-                <div class="city-name" id="name2">倫敦</div>
+                <div class="city-group">
+                    <div class="city-name" id="name2">倫敦</div>
+                    <div class="utc-text" id="utc2">UTC +0</div>
+                </div>
                 <div class="date-text" id="date2">--/--</div>
             </div>
             <div class="clock-row" id="c2"></div>
@@ -150,8 +169,8 @@
 
     <div id="menuOverlay">
         <div class="menu-header">
-            <span style="color:var(--wood-color)">選擇時區城市</span>
-            <span onclick="closeMenu()" style="cursor:pointer">✕ 關閉</span>
+            <span style="color:var(--wood-color)">選擇城市</span>
+            <span onclick="closeMenu()" style="cursor:pointer">✕</span>
         </div>
         <div class="city-list" id="cityList"></div>
     </div>
@@ -159,19 +178,20 @@
 <script>
     const cityData = [
         { name: "檀香山", off: -10 }, { name: "洛杉磯", off: -7 }, { name: "紐約", off: -4 },
-        { name: "倫敦", off: 0 }, { name: "巴黎", off: 1 }, { name: "台北", off: 8 },
+        { name: "倫敦", off: 0 }, { name: "巴黎", off: 1 }, { name: "開羅", off: 2 },
+        { name: "杜拜", off: 4 }, { name: "曼谷", off: 7 }, { name: "台北", off: 8 },
         { name: "東京", off: 9 }, { name: "雪梨", off: 11 }
     ].sort((a,b) => a.off - b.off);
+
+    let state = {
+        c1: { off: 8, name: "台北", cur: [8,8,8,8,8,8], locks: [true,true,true,true,true,true] },
+        c2: { off: 0, name: "倫敦", cur: [8,8,8,8,8,8], locks: [true,true,true,true,true,true] }
+    };
 
     const digitMap = {
         0:[1,1,1,1,1,1,0], 1:[0,1,1,0,0,0,0], 2:[1,1,0,1,1,0,1], 3:[1,1,1,1,0,0,1],
         4:[0,1,1,0,0,1,1], 5:[1,0,1,1,0,1,1], 6:[1,0,1,1,1,1,1], 7:[1,1,1,0,0,0,0],
         8:[1,1,1,1,1,1,1], 9:[1,1,1,1,0,1,1]
-    };
-
-    let state = {
-        c1: { off: 8, name: "台北", cur: [8,8,8,8,8,8], digitLocks: [true,true,true,true,true,true] },
-        c2: { off: 0, name: "倫敦", cur: [8,8,8,8,8,8], digitLocks: [true,true,true,true,true,true] }
     };
 
     function buildClock(id) {
@@ -200,13 +220,12 @@
         const el = document.getElementById(`${clockId}-${keys[partIdx]}`);
         if (!el) return;
         const segs = el.children;
-        const pattern = digitMap[val];
-        for(let i=0; i<7; i++) {
-            pattern[i] ? segs[i].classList.add('on') : segs[i].classList.remove('on');
-        }
+        digitMap[val].forEach((on, i) => {
+            on ? segs[i].classList.add('on') : segs[i].classList.remove('on');
+        });
     }
 
-    function getTimeDigits(off) {
+    function getTime(off) {
         const now = new Date();
         const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
         const t = new Date(utc + (3600000 * off));
@@ -214,41 +233,42 @@
         return { digits: s.split('').map(Number), date: `${t.getMonth()+1}/${t.getDate()}` };
     }
 
-    async function runTransition(clockKey) {
-        const clockState = state[clockKey];
-        clockState.digitLocks = [true,true,true,true,true,true];
-        clockState.cur = [8,8,8,8,8,8];
-        clockState.cur.forEach((v, idx) => draw(clockKey, idx, 8));
+    async function runTransition(id) {
+        const s = state[id];
+        s.locks = [true,true,true,true,true,true];
+        s.cur = [8,8,8,8,8,8];
+        s.cur.forEach((v, i) => draw(id, i, 8));
 
-        const speeds = [300, 300, 180, 180, 80, 80]; 
+        const speeds = [400, 400, 200, 200, 70, 70];
 
+        // 右至左倒數
         for (let i = 5; i >= 0; i--) {
-            await new Promise(resolve => {
+            await new Promise(res => {
                 const timer = setInterval(() => {
-                    const target = getTimeDigits(clockState.off).digits[i];
-                    if (clockState.cur[i] === target) {
+                    const target = getTime(s.off).digits[i];
+                    if (s.cur[i] === target) {
                         clearInterval(timer);
-                        clockState.digitLocks[i] = false;
-                        resolve();
-                        return;
+                        s.locks[i] = false; // 關鍵點：一旦到位，立即解鎖交由系統 update 接管
+                        res();
+                    } else {
+                        s.cur[i] = (s.cur[i] - 1 + 10) % 10;
+                        draw(id, i, s.cur[i]);
                     }
-                    clockState.cur[i] = (clockState.cur[i] - 1 + 10) % 10;
-                    draw(clockKey, i, clockState.cur[i]);
                 }, speeds[i]);
             });
         }
     }
 
     function update() {
-        ['c1', 'c2'].forEach(key => {
-            const clock = state[key];
-            const t = getTimeDigits(clock.off);
-            document.getElementById(`date${key.slice(1)}`).innerText = t.date;
-            document.getElementById(`name${key.slice(1)}`).innerText = clock.name;
+        ['c1', 'c2'].forEach(id => {
+            const s = state[id];
+            const t = getTime(s.off);
+            document.getElementById(`date${id.slice(1)}`).innerText = t.date;
+            document.getElementById(`utc${id.slice(1)}`).innerText = `UTC ${s.off>=0?'+':''}${s.off}`;
             t.digits.forEach((val, i) => {
-                if (!clock.digitLocks[i]) {
-                    clock.cur[i] = val;
-                    draw(key, i, val);
+                if (!s.locks[i]) {
+                    s.cur[i] = val;
+                    draw(id, i, val);
                 }
             });
         });
@@ -258,26 +278,28 @@
         const list = document.getElementById('cityList');
         list.innerHTML = '';
         cityData.forEach(c => {
-            const div = document.createElement('div');
-            div.className = 'city-item';
-            div.innerHTML = `<span>${c.name}</span><span style="opacity:0.4">UTC ${c.off>=0?'+':''}${c.off}</span>`;
-            div.onclick = () => {
-                const key = `c${idx}`;
-                state[key].off = c.off; state[key].name = c.name;
-                closeMenu(); runTransition(key);
+            const d = document.createElement('div');
+            d.className = 'city-item';
+            d.innerHTML = `<span>${c.name}</span><span>UTC ${c.off>=0?'+':''}${c.off}</span>`;
+            d.onclick = () => {
+                const id = `c${idx}`;
+                state[id].off = c.off;
+                state[id].name = c.name;
+                document.getElementById(`name${idx}`).innerText = c.name;
+                closeMenu();
+                runTransition(id);
             };
-            list.appendChild(div);
+            list.appendChild(d);
         });
         document.getElementById('menuOverlay').style.display = 'flex';
     }
 
     function closeMenu() { document.getElementById('menuOverlay').style.display = 'none'; }
 
-    window.onload = () => {
-        buildClock('c1'); buildClock('c2');
-        runTransition('c1'); runTransition('c2');
-        setInterval(update, 1000);
-    };
+    buildClock('c1'); buildClock('c2');
+    runTransition('c1');
+    runTransition('c2');
+    setInterval(update, 1000);
 </script>
 </body>
 </html>
