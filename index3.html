@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>機械六邊型時鐘 - 純淨平面翻板版</title>
+    <title>機械六邊型時鐘 - 物理翻板版</title>
     <style>
         :root {
             --wood-color: #dcc2a1;
@@ -77,34 +77,31 @@
             flex-shrink: 0;
         }
 
-        /* 純平面翻板：移除所有陰影相關代碼 */
         .segment { 
             position: absolute; 
             background: var(--wood-color);
             pointer-events: none;
             opacity: 0;
-            /* 模擬翻轉：垂直壓縮與位移 */
-            transform: scaleY(0) translateY(-5px);
             transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1.4), opacity 0.15s;
         }
 
+        /* 水平板段：上下翻動 (ScaleY) */
         .seg-h { 
             clip-path: polygon(12% 0%, 88% 0%, 100% 50%, 88% 100%, 12% 100%, 0% 50%);
             height: var(--seg-thickness);
+            transform: scaleY(0);
         }
+        .seg-h.on { transform: scaleY(1); opacity: 1; }
 
+        /* 垂直板段：左右翻動 (ScaleX) */
         .seg-v { 
             clip-path: polygon(50% 0%, 100% 12%, 100% 88%, 50% 100%, 0% 88%, 0% 12%);
             width: var(--seg-thickness);
+            transform: scaleX(0);
         }
+        .seg-v.on { transform: scaleX(1); opacity: 1; }
 
-        /* 顯示狀態：回歸原始比例 */
-        .segment.on { 
-            opacity: 1;
-            transform: scaleY(1) translateY(0); 
-        }
-
-        /* 板段定位設定 */
+        /* 定位與轉軸設定 */
         .seg-a { top: 4px; left: 14px; right: 14px; transform-origin: top; }
         .seg-b { top: 10px; right: 4px; height: 52px; transform-origin: right; }
         .seg-c { top: 68px; right: 4px; height: 52px; transform-origin: right; }
