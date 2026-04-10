@@ -8,77 +8,91 @@
     <style>
         :root { --wood: #dcc2a1; --dark: #3e2723; }
         body { background: #0a0a0a; color: white; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .box { width: 90%; max-width: 350px; background: var(--dark); padding: 25px; border-radius: 15px; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 5px; border: 1px solid var(--wood); background: #2a1b19; color: white; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: var(--wood); color: var(--dark); border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .box { width: 90%; max-width: 350px; background: var(--dark); padding: 25px; border-radius: 15px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid var(--wood); background: #2a1b19; color: white; box-sizing: border-box; outline: none; }
+        button { width: 100%; padding: 15px; background: var(--wood); color: var(--dark); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; }
+        button:active { opacity: 0.8; }
         #status { margin-top: 15px; font-size: 12px; color: #888; }
     </style>
 </head>
 <body>
     <div class="box">
-        <h3 style="color:var(--wood)">白六世界時鐘分享</h3>
-        <input type="text" id="greeting" value="看一看現在的精確時間！">
-        <button id="btn" onclick="share()">點我選擇好友寄送</button>
-        <div id="status">初始化中...</div>
+        <h3 style="color:var(--wood); margin-top:0;">白六世界時鐘分享</h3>
+        <input type="text" id="greeting" value="這是一個機械感十足的世界時鐘！">
+        <button id="btnShare" onclick="sendShare()">點選好友寄送</button>
+        <div id="status">正在初始化系統...</div>
     </div>
 
 <script>
-    const LIFF_ID = '2009222789-jxWTouxO';
-    const TARGET_URL = 'https://kuochili-ops.github.io/World_clock/index2.html';
+    const MY_LIFF_ID = '2009222789-jxWTouxO'; 
+    const CLOCK_URL = 'https://kuochili-ops.github.io/World_clock/index2.html';
 
-    async function init() {
+    async function initLiff() {
+        const statusEl = document.getElementById('status');
         try {
-            await liff.init({ liffId: LIFF_ID });
+            await liff.init({ liffId: MY_LIFF_ID });
             if (!liff.isLoggedIn()) {
+                statusEl.innerText = "正在引導登入...";
                 liff.login();
             } else {
-                // 檢查是否真的具備分享權限
-                if (liff.canIUse('shareTargetPicker')) {
-                    document.getElementById('status').innerText = "環境檢查：通過";
-                } else {
-                    document.getElementById('status').innerText = "環境檢查：請至後台開啟 shareTargetPicker 權限";
-                    document.getElementById('btn').style.opacity = "0.5";
-                }
+                statusEl.innerText = "系統就緒，請輸入問候語並寄送";
             }
-        } catch (e) {
-            document.getElementById('status').innerText = "錯誤: " + e.message;
+        } catch (err) {
+            statusEl.innerText = "初始化失敗: " + err.code + " " + err.message;
         }
     }
 
-    async function share() {
-        const msg = document.getElementById('greeting').value;
+    async function sendShare() {
+        const statusEl = document.getElementById('status');
+        const greetingText = document.getElementById('greeting').value;
+
+        // 使用更相容的方式檢查 shareTargetPicker
+        if (typeof liff.shareTargetPicker !== 'function') {
+            alert('此 LINE 版本或設定不支援分享功能。請確認 LINE Developer 後台已開啟 shareTargetPicker 權限。');
+            return;
+        }
+
         try {
-            const res = await liff.shareTargetPicker([{
-                "type": "flex",
-                "altText": "白六送給你一個世界時鐘",
-                "contents": {
-                    "type": "bubble",
-                    "backgroundColor": "#3e2723",
-                    "body": {
-                        "type": "box",
-                        "layout": "vertical",
-                        "contents": [
-                            { "type": "text", "text": "WORLD CLOCK", "color": "#dcc2a1", "size": "xs", "weight": "bold" },
-                            { "type": "text", "text": msg, "color": "#ffffff", "margin": "md", "wrap": true, "weight": "bold" },
-                            {
-                                "type": "button",
-                                "action": { "type": "uri", "label": "開啟時鐘", "uri": TARGET_URL },
-                                "style": "primary",
-                                "color": "#dcc2a1",
-                                "margin": "xl"
-                            }
-                        ]
+            const result = await liff.shareTargetPicker([
+                {
+                    "type": "flex",
+                    "altText": "白六送給你一個世界時鐘",
+                    "contents": {
+                        "type": "bubble",
+                        "backgroundColor": "#3e2723",
+                        "body": {
+                            "type": "box",
+                            "layout": "vertical",
+                            "contents": [
+                                { "type": "text", "text": "WORLD CLOCK", "color": "#dcc2a1", "size": "xs", "weight": "bold" },
+                                { "type": "text", "text": greetingText, "color": "#ffffff", "margin": "md", "wrap": true, "weight": "bold", "size": "md" },
+                                {
+                                    "type": "button",
+                                    "action": { "type": "uri", "label": "開啟時鐘", "uri": CLOCK_URL },
+                                    "style": "primary",
+                                    "color": "#dcc2a1",
+                                    "margin": "xl"
+                                }
+                            ]
+                        }
                     }
                 }
-            }]);
-            if (res) {
-                liff.closeWindow();
+            ]);
+
+            if (result) {
+                statusEl.innerText = "訊息已成功送出！";
+                setTimeout(() => liff.closeWindow(), 1000);
+            } else {
+                statusEl.innerText = "已取消寄送";
             }
-        } catch (e) {
-            alert("傳送失敗: " + e.message);
+        } catch (error) {
+            statusEl.innerText = "寄送失敗: " + error.message;
+            console.error(error);
         }
     }
-    init();
+
+    // 啟動初始化
+    initLiff();
 </script>
 </body>
 </html>
