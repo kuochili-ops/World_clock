@@ -19,7 +19,7 @@
 </head>
 <body>
 
-<div id="loadingOverlay">正在開啟時鐘...</div>
+<div id="loadingOverlay">系統處理中...</div>
 
 <div class="card" id="editorUI" style="display: none;">
     <h2>⏰ 世界時鐘分享</h2>
@@ -40,7 +40,7 @@
             // 取得網址參數
             const params = new URLSearchParams(window.location.search);
             
-            // 判斷邏輯：如果帶有 action=play，跳轉到 index2.html
+            // 邏輯判斷：如果帶有 action=play，跳轉到 index2.html
             if (params.get('action') === 'play') {
                 window.location.href = "index2.html"; 
                 return;
@@ -62,7 +62,7 @@
     async function sendFlex() {
         const greeting = document.getElementById('greeting').value || "送給你一個精緻的世界時鐘";
         
-        // 關鍵：寄出的連結必須帶有 ?action=play 參數
+        // 模仿成功案例邏輯：使用 LIFF URL 帶上參數
         const playLink = `https://liff.line.me/${LIFF_ID}/?action=play`;
 
         const flexMsg = [{
@@ -101,7 +101,7 @@
                 liff.closeWindow();
             }
         } catch (e) {
-            alert("發送失敗，請確認後台 Scopes 勾選了 shareTargetPicker");
+            alert("發送失敗，請確認後台 Scopes 是否已更新。");
         }
     }
 
