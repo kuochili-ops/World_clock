@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>機械六邊型時鐘 - 物理翻板終極版</title>
+    <title>機械六邊型時鐘 - 物理翻板修復版</title>
     <style>
         :root {
             --wood-color: #dcc2a1;
@@ -77,45 +77,46 @@
             flex-shrink: 0;
         }
 
-        /* 核心機制：利用 CSS 變數確保消失與出現的路徑一致 */
+        /* 核心修復：使用單一變數控制顯示比例 */
         .segment { 
             position: absolute; 
             background: var(--wood-color);
             pointer-events: none;
+            /* 預設比例為 0，且透明 */
+            --s: 0; 
             opacity: 0;
-            --scale: 0; /* 預設收起 */
-            /* 強制在 0.35s 內完成縮放與透明度變化 */
-            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-in-out;
+            /* 強制雙向過渡：消失與出現的路徑完全相同 */
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
         }
 
-        /* 水平板段：永遠只在 Y 軸變動 */
+        /* 顯示狀態：僅改變變數值 */
+        .segment.on { 
+            --s: 1;
+            opacity: 1;
+        }
+
+        /* 水平板段：強制只在 Y 軸依照變數縮放 */
         .seg-h { 
             clip-path: polygon(12% 0%, 88% 0%, 100% 50%, 88% 100%, 12% 100%, 0% 50%);
             height: var(--seg-thickness);
-            transform: scaleY(var(--scale));
+            transform: scaleY(var(--s));
         }
 
-        /* 垂直板段：永遠只在 X 軸變動 */
+        /* 垂直板段：強制只在 X 軸依照變數縮放 */
         .seg-v { 
             clip-path: polygon(50% 0%, 100% 12%, 100% 88%, 50% 100%, 0% 88%, 0% 12%);
             width: var(--seg-thickness);
-            transform: scaleX(var(--scale));
+            transform: scaleX(var(--s));
         }
 
-        /* 當有 .on 類別時，將變數設為 1，觸發過渡 */
-        .segment.on { 
-            opacity: 1;
-            --scale: 1;
-        }
-
-        /* 物理轉軸設定 */
-        .seg-a { top: 4px; left: 14px; right: 14px; transform-origin: top center; }
-        .seg-b { top: 10px; right: 4px; height: 52px; transform-origin: right center; }
-        .seg-c { top: 68px; right: 4px; height: 52px; transform-origin: right center; }
-        .seg-d { bottom: 4px; left: 14px; right: 14px; transform-origin: bottom center; }
-        .seg-e { top: 68px; left: 4px; height: 52px; transform-origin: left center; }
-        .seg-f { top: 10px; left: 4px; height: 52px; transform-origin: left center; }
-        .seg-g { top: 56px; left: 14px; right: 14px; transform-origin: center center; }
+        /* 轉軸細節設定 */
+        .seg-a { top: 4px; left: 14px; right: 14px; transform-origin: top; }
+        .seg-b { top: 10px; right: 4px; height: 52px; transform-origin: right; }
+        .seg-c { top: 68px; right: 4px; height: 52px; transform-origin: right; }
+        .seg-d { bottom: 4px; left: 14px; right: 14px; transform-origin: bottom; }
+        .seg-e { top: 68px; left: 4px; height: 52px; transform-origin: left; }
+        .seg-f { top: 10px; left: 4px; height: 52px; transform-origin: left; }
+        .seg-g { top: 56px; left: 14px; right: 14px; transform-origin: center; }
 
         .sep { color: var(--wood-color); font-size: 3rem; font-weight: bold; margin: 0 5px; opacity: 0.5; padding-bottom: 15px; }
 
