@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>機械六邊型時鐘 - 平面翻板模擬版</title>
+    <title>機械六邊型時鐘 - 全同步翻板版</title>
     <style>
         :root {
             --wood-color: #dcc2a1;
@@ -39,7 +39,7 @@
             background: var(--bg-frame);
             padding: 40px 20px;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -77,54 +77,37 @@
             flex-shrink: 0;
         }
 
-        /* 核心修改：使用 2D 矩陣模擬翻轉 */
+        /* 核心修改：讓消失也擁有翻動過渡 */
         .segment { 
             position: absolute; 
             background: var(--wood-color);
             pointer-events: none;
             opacity: 0;
-            /* 初始狀態：垂直壓扁 (模擬側面) */
-            transform: scaleY(0) translateY(-10px);
-            /* 使用更強的貝茲曲線模擬機械彈跳 */
-            transition: transform 0.4s cubic-bezier(0.47, 0, 0.23, 1.38), opacity 0.2s;
-            transform-origin: center;
+            /* 將過渡放在這裡，確保 ON/OFF 都有動畫 */
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s;
         }
 
+        /* 水平板段初始狀態 (消失) */
         .seg-h { 
             clip-path: polygon(12% 0%, 88% 0%, 100% 50%, 88% 100%, 12% 100%, 0% 50%);
             height: var(--seg-thickness);
+            transform: scaleY(0); 
         }
 
+        /* 垂直板段初始狀態 (消失) */
         .seg-v { 
             clip-path: polygon(50% 0%, 100% 12%, 100% 88%, 50% 100%, 0% 88%, 0% 12%);
             width: var(--seg-thickness);
+            transform: scaleX(0);
         }
 
-        /* 顯示狀態：恢復原始高度與位置 */
+        /* 出現狀態 */
         .segment.on { 
             opacity: 1;
-            transform: scaleY(1) translateY(0); 
+            transform: scaleX(1) scaleY(1); /* 恢復原始比例 */
         }
 
-        /* 陰影模擬：隨著翻轉動作出現 */
-        .segment::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            transition: opacity 0.4s;
-            opacity: 0;
-            filter: blur(4px);
-            z-index: -1;
-            clip-path: inherit;
-        }
-
-        .segment.on::after {
-            opacity: 1;
-            transform: translate(6px, 8px); 
-        }
-
-        /* 定位設定 */
+        /* 轉軸設定保持不變 */
         .seg-a { top: 4px; left: 14px; right: 14px; transform-origin: top; }
         .seg-b { top: 10px; right: 4px; height: 52px; transform-origin: right; }
         .seg-c { top: 68px; right: 4px; height: 52px; transform-origin: right; }
@@ -258,10 +241,8 @@
         ['c1', 'c2'].forEach(key => {
             const clock = state[key];
             const t = getTimeDigits(clock.off);
-            const dateEl = document.getElementById(`date${key.slice(1)}`);
-            const nameEl = document.getElementById(`name${key.slice(1)}`);
-            if(dateEl) dateEl.innerText = t.date;
-            if(nameEl) nameEl.innerText = clock.name;
+            document.getElementById(`date${key.slice(1)}`).innerText = t.date;
+            document.getElementById(`name${key.slice(1)}`).innerText = clock.name;
             t.digits.forEach((val, i) => {
                 if (!clock.digitLocks[i]) {
                     clock.cur[i] = val;
