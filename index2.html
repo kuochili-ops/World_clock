@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>機械六邊型時鐘 - 完整翻板版</title>
+    <title>機械六邊型時鐘 - 物理翻板終極版</title>
     <style>
         :root {
             --wood-color: #dcc2a1;
@@ -77,41 +77,38 @@
             flex-shrink: 0;
         }
 
-        /* 核心過渡設定 */
+        /* 核心機制：利用 CSS 變數確保消失與出現的路徑一致 */
         .segment { 
             position: absolute; 
             background: var(--wood-color);
             pointer-events: none;
             opacity: 0;
-            /* 確保 transform 和 opacity 在進入和退出時都有動畫 */
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1.2), opacity 0.3s ease;
+            --scale: 0; /* 預設收起 */
+            /* 強制在 0.35s 內完成縮放與透明度變化 */
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-in-out;
         }
 
-        /* 水平板段：預設是壓縮 Y 軸 (消失狀態) */
+        /* 水平板段：永遠只在 Y 軸變動 */
         .seg-h { 
             clip-path: polygon(12% 0%, 88% 0%, 100% 50%, 88% 100%, 12% 100%, 0% 50%);
             height: var(--seg-thickness);
-            transform: scaleY(0); 
-        }
-        /* 水平板段：開啟時恢復 Y 軸 */
-        .seg-h.on { 
-            opacity: 1;
-            transform: scaleY(1); 
+            transform: scaleY(var(--scale));
         }
 
-        /* 垂直板段：預設是壓縮 X 軸 (消失狀態) */
+        /* 垂直板段：永遠只在 X 軸變動 */
         .seg-v { 
             clip-path: polygon(50% 0%, 100% 12%, 100% 88%, 50% 100%, 0% 88%, 0% 12%);
             width: var(--seg-thickness);
-            transform: scaleX(0);
-        }
-        /* 垂直板段：開啟時恢復 X 軸 */
-        .seg-v.on { 
-            opacity: 1;
-            transform: scaleX(1); 
+            transform: scaleX(var(--scale));
         }
 
-        /* 轉軸與定位 */
+        /* 當有 .on 類別時，將變數設為 1，觸發過渡 */
+        .segment.on { 
+            opacity: 1;
+            --scale: 1;
+        }
+
+        /* 物理轉軸設定 */
         .seg-a { top: 4px; left: 14px; right: 14px; transform-origin: top center; }
         .seg-b { top: 10px; right: 4px; height: 52px; transform-origin: right center; }
         .seg-c { top: 68px; right: 4px; height: 52px; transform-origin: right center; }
