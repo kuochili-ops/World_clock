@@ -3,155 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>白六 Line 世界時鐘 - 分享器</title>
+    <title>白六 Line 世界時鐘</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        :root {
-            --wood-color: #dcc2a1;
-            --bg-frame: #3e2723;
-            --bg-body: #0a0a0a;
-        }
-        body {
-            background-color: var(--bg-body);
-            color: white;
-            font-family: -apple-system, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0; padding: 20px;
-            box-sizing: border-box;
-        }
-        .container {
-            width: 100%;
-            max-width: 400px;
-            background: var(--bg-frame);
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            text-align: center;
-        }
-        h2 { color: var(--wood-color); margin-top: 0; }
-        input {
-            width: 100%;
-            padding: 12px;
-            margin: 20px 0;
-            border-radius: 8px;
-            border: 1px solid var(--wood-color);
-            background: #2a1b19;
-            color: white;
-            font-size: 1rem;
-            box-sizing: border-box;
-        }
-        button {
-            width: 100%;
-            padding: 15px;
-            background-color: var(--wood-color);
-            color: var(--bg-frame);
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 1.1rem;
-            cursor: pointer;
-        }
-        button:disabled { opacity: 0.3; }
-        #log { margin-top: 15px; font-size: 0.8rem; color: #888; text-align: left; }
+        :root { --wood: #dcc2a1; --dark: #3e2723; }
+        body { background: #0a0a0a; color: white; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .box { width: 90%; max-width: 350px; background: var(--dark); padding: 25px; border-radius: 15px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 5px; border: 1px solid var(--wood); background: #2a1b19; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: var(--wood); color: var(--dark); border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        #status { margin-top: 15px; font-size: 12px; color: #888; }
     </style>
 </head>
 <body>
-
-    <div class="container">
-        <h2>白六世界時鐘</h2>
-        <input type="text" id="greeting" placeholder="輸入問候語..." value="送給你一個機械感十足的世界時鐘！">
-        <button id="btnShare" onclick="sendShare()">點選聯絡人並寄送</button>
-        <div id="log">正在檢查 LIFF 狀態...</div>
+    <div class="box">
+        <h3 style="color:var(--wood)">白六世界時鐘分享</h3>
+        <input type="text" id="greeting" value="看一看現在的精確時間！">
+        <button id="btn" onclick="share()">點我選擇好友寄送</button>
+        <div id="status">初始化中...</div>
     </div>
 
 <script>
-    const MY_LIFF_ID = '2009222789-jxWTouxO'; 
-    const CLOCK_URL = 'https://kuochili-ops.github.io/World_clock/index2.html';
+    const LIFF_ID = '2009222789-jxWTouxO';
+    const TARGET_URL = 'https://kuochili-ops.github.io/World_clock/index2.html';
 
-    function setLog(msg) {
-        document.getElementById('log').innerText = msg;
-    }
-
-    async function initLiff() {
+    async function init() {
         try {
-            await liff.init({ liffId: MY_LIFF_ID });
+            await liff.init({ liffId: LIFF_ID });
             if (!liff.isLoggedIn()) {
-                setLog("尚未登入，跳轉中...");
                 liff.login();
             } else {
-                setLog("LIFF 已就緒");
+                // 檢查是否真的具備分享權限
+                if (liff.canIUse('shareTargetPicker')) {
+                    document.getElementById('status').innerText = "環境檢查：通過";
+                } else {
+                    document.getElementById('status').innerText = "環境檢查：請至後台開啟 shareTargetPicker 權限";
+                    document.getElementById('btn').style.opacity = "0.5";
+                }
             }
-        } catch (err) {
-            setLog("初始化失敗: " + err.message);
+        } catch (e) {
+            document.getElementById('status').innerText = "錯誤: " + e.message;
         }
     }
 
-    async function sendShare() {
-        const greetingText = document.getElementById('greeting').value;
-        
-        // 1. 檢查功能是否可用
-        if (!liff.isApiAvailable('shareTargetPicker')) {
-            alert('請檢查 LINE Developers 後台是否已開啟 shareTargetPicker 權限。');
-            return;
-        }
-
+    async function share() {
+        const msg = document.getElementById('greeting').value;
         try {
-            // 2. 呼叫分享視窗
-            const result = await liff.shareTargetPicker([
-                {
-                    "type": "flex",
-                    "altText": "收到了白六世界時鐘的問候",
-                    "contents": {
-                        "type": "bubble",
-                        "size": "medium",
-                        "body": {
-                            "type": "box",
-                            "layout": "vertical",
-                            "contents": [
-                                { "type": "text", "text": "WORLD CLOCK", "weight": "bold", "color": "#dcc2a1", "size": "sm" },
-                                { "type": "text", "text": greetingText, "weight": "bold", "size": "md", "margin": "md", "color": "#ffffff", "wrap": true },
-                                { "type": "separator", "margin": "xxl", "color": "#3e2723" },
-                                {
-                                    "type": "box",
-                                    "layout": "vertical",
-                                    "margin": "xxl",
-                                    "contents": [
-                                        {
-                                            "type": "button",
-                                            "action": {
-                                                "type": "uri",
-                                                "label": "開啟世界時鐘",
-                                                "uri": CLOCK_URL
-                                            },
-                                            "style": "primary",
-                                            "color": "#dcc2a1"
-                                        }
-                                    ]
-                                }
-                            ],
-                            "backgroundColor": "#3e2723"
-                        }
+            const res = await liff.shareTargetPicker([{
+                "type": "flex",
+                "altText": "白六送給你一個世界時鐘",
+                "contents": {
+                    "type": "bubble",
+                    "backgroundColor": "#3e2723",
+                    "body": {
+                        "type": "box",
+                        "layout": "vertical",
+                        "contents": [
+                            { "type": "text", "text": "WORLD CLOCK", "color": "#dcc2a1", "size": "xs", "weight": "bold" },
+                            { "type": "text", "text": msg, "color": "#ffffff", "margin": "md", "wrap": true, "weight": "bold" },
+                            {
+                                "type": "button",
+                                "action": { "type": "uri", "label": "開啟時鐘", "uri": TARGET_URL },
+                                "style": "primary",
+                                "color": "#dcc2a1",
+                                "margin": "xl"
+                            }
+                        ]
                     }
                 }
-            ]);
-
-            if (result) {
-                setLog("訊息已送出！");
-                setTimeout(() => liff.closeWindow(), 1500);
-            } else {
-                setLog("取消分享");
+            }]);
+            if (res) {
+                liff.closeWindow();
             }
-        } catch (error) {
-            setLog("傳送錯誤: " + error.message);
-            console.error(error);
+        } catch (e) {
+            alert("傳送失敗: " + e.message);
         }
     }
-
-    initLiff();
+    init();
 </script>
 </body>
 </html>
