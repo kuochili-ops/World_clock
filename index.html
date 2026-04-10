@@ -6,18 +6,21 @@
     <title>白六世界時鐘</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        body { font-family: sans-serif; background: #0a0a0a; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .card { background: #3e2723; border-radius: 20px; padding: 25px; width: 85%; max-width: 400px; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 10px; border: 1px solid #dcc2a1; background: #2a1b19; color: white; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: #dcc2a1; color: #3e2723; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        :root { --wood: #dcc2a1; --dark: #3e2723; --bg: #0a0a0a; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: white; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .card { background: var(--dark); border-radius: 20px; padding: 30px; width: 85%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h2 { color: var(--wood); margin-bottom: 20px; letter-spacing: 2px; }
+        input { width: 100%; padding: 14px; margin-bottom: 20px; border-radius: 12px; border: 1.5px solid var(--wood); background: #2a1b19; color: white; box-sizing: border-box; font-size: 16px; outline: none; }
+        button { width: 100%; padding: 16px; background: var(--wood); color: var(--dark); border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 18px; transition: 0.3s; }
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 100; font-size: 14px; color: var(--wood); }
     </style>
 </head>
 <body>
 
-<div id="loader" style="position:fixed;">讀取中...</div>
+<div id="loader">載入系統中...</div>
 
 <div class="card" id="app" style="display:none;">
-    <h2 style="color:#dcc2a1;">世界時鐘分享</h2>
+    <h2>白六世界時鐘</h2>
     <input type="text" id="greeting" value="看一看現在的精確時間！">
     <button onclick="send()">選擇好友發送</button>
 </div>
@@ -30,9 +33,9 @@
             await liff.init({ liffId: LIFF_ID });
             const params = new URLSearchParams(window.location.search);
             
-            // 如果帶有 action 參數，直接跳轉 index2.html
+            // 偵測參數跳轉至時鐘介面
             if (params.get('action') === 'play') {
-                window.location.href = "index2.html";
+                window.location.replace("index2.html");
                 return;
             }
 
@@ -44,40 +47,46 @@
     }
 
     async function send() {
-        const txt = document.getElementById('greeting').value;
-        // 模仿成功案例使用帶參數的 LIFF URL
+        const txt = document.getElementById('greeting').value || "送給你一個精緻的世界時鐘";
         const link = `https://liff.line.me/${LIFF_ID}/?action=play`;
 
         const msg = [{
-            type: "flex",
-            altText: "⏰ 白六世界時鐘",
-            contents: {
+            "type": "flex",
+            "altText": "⏰ 白六世界時鐘分享",
+            "contents": {
                 "type": "bubble",
-                "hero": {
-                    "type": "image",
-                    "url": "https://images.unsplash.com/photo-1508962301584-53cd991c68e1?w=1000",
-                    "size": "full", "aspectRatio": "20:13", "aspectMode": "cover",
-                    "action": { "type": "uri", "uri": link }
-                },
-                "body": {
-                    "type": "box", "layout": "vertical", "backgroundColor": "#3e2723",
+                "body": { // 移除 hero 區塊，直接使用 body 承載內容，徹底解決空白問題
+                    "type": "box",
+                    "layout": "vertical",
+                    "backgroundColor": "#3e2723",
+                    "paddingAll": "25px",
+                    "spacing": "md",
                     "contents": [
-                        { "type": "text", "text": txt, "color": "#ffffff", "wrap": true, "weight": "bold" }
-                    ]
-                },
-                "footer": {
-                    "type": "box", "layout": "vertical", "backgroundColor": "#3e2723",
-                    "contents": [
-                        { "type": "button", "action": { "type": "uri", "label": "開啟時鐘", "uri": link }, "style": "primary", "color": "#dcc2a1" }
+                        { "type": "text", "text": "WORLD CLOCK", "color": "#dcc2a1", "size": "xs", "weight": "bold", "letterSpacing": "2px" },
+                        { "type": "text", "text": txt, "color": "#ffffff", "wrap": true, "weight": "bold", "size": "md", "margin": "md" },
+                        {
+                            "type": "button",
+                            "action": { "type": "uri", "label": "開啟時鐘", "uri": link },
+                            "style": "primary",
+                            "color": "#dcc2a1",
+                            "margin": "xl",
+                            "height": "sm"
+                        }
                     ]
                 }
             }
         }];
 
         try {
+            if (!liff.isInClient()) {
+                alert("請在 LINE App 內操作");
+                return;
+            }
             await liff.shareTargetPicker(msg);
             liff.closeWindow();
-        } catch (e) { alert("發送失敗"); }
+        } catch (e) { 
+            alert("發送失敗，請確認 Scopes 已勾選 shareTargetPicker"); 
+        }
     }
     window.onload = init;
 </script>
