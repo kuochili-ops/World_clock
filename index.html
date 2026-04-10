@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>白六 Line 世界時鐘 - 分享</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        :root {
+            --wood-color: #dcc2a1;
+            --bg-frame: #3e2723;
+            --bg-body: #0a0a0a;
+        }
+        body {
+            background-color: var(--bg-body);
+            color: white;
+            font-family: -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            width: 100%;
+            max-width: 400px;
+            background: var(--bg-frame);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+        h2 { color: var(--wood-color); margin-bottom: 25px; }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--wood-color);
+            background: #2a1b19;
+            color: white;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--wood-color);
+            color: var(--bg-frame);
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        #status { margin-top: 15px; font-size: 0.9rem; color: #aaa; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>白六世界時鐘</h2>
+        <input type="text" id="greeting" placeholder="輸入問候語 (例如：早安！)" value="這是一個機械感十足的世界時鐘！">
+        <button id="btnShare" disabled>點選聯絡人並寄送</button>
+        <p id="status">正在初始化 LIFF...</p>
+    </div>
+
+<script>
+    // 請將此處替換為您的 LIFF ID
+    const MY_LIFF_ID = 'YOUR_LIFF_ID_HERE'; 
+    const CLOCK_URL = 'https://kuochili-ops.github.io/World_clock/index2.html';
+
+    async function initLiff() {
+        try {
+            await liff.init({ liffId: MY_LIFF_ID });
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            } else {
+                document.getElementById('btnShare').disabled = false;
+                document.getElementById('status').innerText = '準備就緒';
+            }
+        } catch (err) {
+            document.getElementById('status').innerText = '初始化失敗: ' + err;
+        }
+    }
+
+    async function sendShare() {
+        const greeting = document.getElementById('greeting').value || '送給你一個精緻的世界時鐘';
+        
+        if (!liff.isApiAvailable('shareTargetPicker')) {
+            alert('此環境不支援分享功能，請在 LINE 內開啟。');
+            return;
+        }
+
+        try {
+            const result = await liff.shareTargetPicker([
+                {
+                    "type": "flex",
+                    "altText": "收到了白六世界時鐘的問候",
+                    "contents": {
+                        "type": "bubble",
+                        "size": "medium",
+                        "header": {
+                            "type": "box",
+                            "layout": "vertical",
+                            "contents": [
+                                {
+                                    "type": "text",
+                                    "text": greeting,
+                                    "color": "#dcc2a1",
+                                    "weight": "bold",
+                                    "size": "sm",
+                                    "wrap": true
+                                }
+                            ],
+                            "backgroundColor": "#3e2723"
+                        },
+                        "hero": {
+                            "type": "image",
+                            "url": "https://images.unsplash.com/photo-1508962301584-53cd991c68e1?auto=format&fit=crop&q=80&w=1000",
+                            "size": "full",
+                            "aspectRatio": "20:13",
+                            "aspectMode": "cover"
+                        },
+                        "body": {
+                            "type": "box",
+                            "layout": "vertical",
+                            "contents": [
+                                {
+                                    "type": "text",
+                                    "text": "白六世界時鐘",
+                                    "weight": "bold",
+                                    "size": "xl",
+                                    "color": "#dcc2a1"
+                                },
+                                {
+                                    "type": "text",
+                                    "text": "機械六邊型板段驅動時鐘",
+                                    "size": "xs",
+                                    "color": "#aaaaaa",
+                                    "margin": "sm"
+                                }
+                            ],
+                            "backgroundColor": "#0a0a0a"
+                        },
+                        "footer": {
+                            "type": "box",
+                            "layout": "vertical",
+                            "contents": [
+                                {
+                                    "type": "button",
+                                    "action": {
+                                        "type": "uri",
+                                        "label": "立即查看時間",
+                                        "uri": CLOCK_URL
+                                    },
+                                    "style": "primary",
+                                    "color": "#3e2723"
+                                }
+                            ],
+                            "backgroundColor": "#0a0a0a"
+                        },
+                        "styles": {
+                            "footer": {
+                                "separator": true
+                            }
+                        }
+                    }
+                }
+            ]);
+
+            if (result) {
+                // 寄送成功後關閉視窗
+                liff.closeWindow();
+            }
+        } catch (error) {
+            console.error('寄送失敗', error);
+        }
+    }
+
+    document.getElementById('btnShare').addEventListener('click', sendShare);
+    initLiff();
+</script>
+</body>
+</html>
