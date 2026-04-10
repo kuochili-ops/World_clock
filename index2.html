@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>機械六邊型 - 即時解鎖版</title>
+    <title>機械六邊型 - 無陰影即時版</title>
     <style>
         :root {
             --wood-color: #dcc2a1;
             --bg-frame: #3e2723;
             --bg-body: #0a0a0a;
-            --seg-thickness: 5vw; /* 改用寬度百分比 */
-            --max-thickness: 16px;
         }
 
         body {
@@ -37,108 +35,87 @@
 
         .clock-card {
             background: var(--bg-frame);
-            padding: 15px 10px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 12px;
             display: flex;
             flex-direction: column;
-            min-height: 25vh;
+            min-height: 200px;
         }
 
         .info-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 10px 10px 10px;
-            border-bottom: 1px solid rgba(220, 194, 161, 0.2);
-            margin-bottom: 15px;
-            height: 30px; /* 固定高度確保直式螢幕可見 */
+            height: 40px; 
+            border-bottom: 1px solid rgba(220, 194, 161, 0.15);
+            margin-bottom: 10px;
+            flex-shrink: 0;
         }
 
         .city-group { display: flex; align-items: baseline; gap: 8px; }
         .city-name { font-size: 1.2rem; color: var(--wood-color); font-weight: bold; }
-        .utc-text { font-size: 0.7rem; opacity: 0.5; color: var(--wood-color); }
-        .date-text { font-size: 1rem; color: var(--wood-color); font-family: monospace; }
+        .utc-text { font-size: 0.8rem; opacity: 0.5; color: var(--wood-color); }
+        .date-text { font-size: 1rem; color: var(--wood-color); opacity: 0.9; }
 
         .clock-row {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 1.5vw;
+            gap: 2vw;
             flex: 1;
+            padding: 10px 0;
         }
 
         .digit { 
             position: relative; 
-            width: 12vw; 
-            max-width: 70px;
+            width: 11vw; 
+            max-width: 65px;
             aspect-ratio: 1 / 1.7;
-            background: transparent;
         }
 
         .segment { 
             position: absolute; 
             transform-style: preserve-3d; 
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); 
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s; 
             background: var(--wood-color);
         }
 
-        /* 響應式板段厚度 */
         .seg-h { 
             clip-path: polygon(12% 0%, 88% 0%, 100% 50%, 88% 100%, 12% 100%, 0% 50%);
-            height: clamp(8px, 2.5vw, 16px);
+            height: clamp(8px, 2.5vw, 15px);
             transform: rotateX(-90deg); 
             transform-origin: top center;
         }
 
         .seg-v { 
             clip-path: polygon(50% 0%, 100% 12%, 100% 88%, 50% 100%, 0% 88%, 0% 12%);
-            width: clamp(8px, 2.5vw, 16px);
+            width: clamp(8px, 2.5vw, 15px);
             transform: rotateY(-90deg); 
             transform-origin: left center;
         }
 
+        /* 移除陰影後的呈現狀態：純物理推進 */
         .segment.on { 
-            transform: rotateX(0deg) rotateY(0deg) translateZ(12px); 
+            transform: rotateX(0deg) rotateY(0deg) translateZ(10px); 
         }
 
-        /* 強化懸浮陰影 */
-        .segment::after {
-            content: '';
-            position: absolute;
-            background: rgba(0,0,0,0.7);
-            transition: transform 0.6s, opacity 0.6s;
-            opacity: 0;
-            filter: blur(5px);
-            pointer-events: none;
-            z-index: -1;
-            clip-path: inherit;
-            top: 0; left: 0; width: 100%; height: 100%;
-        }
-
-        .segment.on::after {
-            opacity: 1;
-            transform: translate(6px, 8px); 
-        }
-
-        /* 位置定義 */
         .seg-a { top: 0; left: 15%; right: 15%; }
         .seg-b { top: 10%; right: 0; height: 35%; }
         .seg-c { bottom: 10%; right: 0; height: 35%; }
         .seg-d { bottom: 0; left: 15%; right: 15%; }
         .seg-e { bottom: 10%; left: 0; height: 35%; }
         .seg-f { top: 10%; left: 0; height: 35%; }
-        .seg-g { top: 45%; left: 15%; right: 15%; height: clamp(8px, 2.5vw, 16px); }
+        .seg-g { top: 45%; left: 15%; right: 15%; height: clamp(8px, 2.5vw, 15px); }
 
-        .sep { color: var(--wood-color); font-size: 5vw; font-weight: bold; opacity: 0.4; }
+        .sep { color: var(--wood-color); font-size: 6vw; font-weight: bold; opacity: 0.3; }
 
         #menuOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95); display: none; flex-direction: column; z-index: 100;
         }
-        .menu-header { padding: 20px; border-bottom: 1px solid #444; display: flex; justify-content: space-between; }
+        .menu-header { padding: 25px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; font-size: 1.2rem; }
         .city-list { flex: 1; overflow-y: auto; }
-        .city-item { padding: 20px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; }
+        .city-item { padding: 20px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -169,7 +146,7 @@
 
     <div id="menuOverlay">
         <div class="menu-header">
-            <span style="color:var(--wood-color)">選擇城市</span>
+            <span style="color:var(--wood-color)">選擇時區城市</span>
             <span onclick="closeMenu()" style="cursor:pointer">✕</span>
         </div>
         <div class="city-list" id="cityList"></div>
@@ -220,9 +197,7 @@
         const el = document.getElementById(`${clockId}-${keys[partIdx]}`);
         if (!el) return;
         const segs = el.children;
-        digitMap[val].forEach((on, i) => {
-            on ? segs[i].classList.add('on') : segs[i].classList.remove('on');
-        });
+        digitMap[val].forEach((on, i) => on ? segs[i].classList.add('on') : segs[i].classList.remove('on'));
     }
 
     function getTime(off) {
@@ -239,16 +214,15 @@
         s.cur = [8,8,8,8,8,8];
         s.cur.forEach((v, i) => draw(id, i, 8));
 
-        const speeds = [400, 400, 200, 200, 70, 70];
+        const speeds = [350, 350, 200, 200, 80, 80];
 
-        // 右至左倒數
         for (let i = 5; i >= 0; i--) {
             await new Promise(res => {
                 const timer = setInterval(() => {
                     const target = getTime(s.off).digits[i];
                     if (s.cur[i] === target) {
                         clearInterval(timer);
-                        s.locks[i] = false; // 關鍵點：一旦到位，立即解鎖交由系統 update 接管
+                        s.locks[i] = false; // 到位後立即解鎖，交由 update()
                         res();
                     } else {
                         s.cur[i] = (s.cur[i] - 1 + 10) % 10;
